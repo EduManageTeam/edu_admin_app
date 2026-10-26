@@ -1,0 +1,85 @@
+import 'package:edu_admin/feature/home_feature/view/sigin_screen.dart';
+import 'package:flutter/material.dart';
+import '../../../model/color_system.dart';
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Go to sign in after 2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const SignInScreen()),
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: ColorSystem.primary,
+      body: SafeArea(
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+          children: [
+            const Spacer(flex: 3),
+            // Logo
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: ColorSystem.surface,
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                'E',
+                style: TextStyle(
+                  fontSize: 44,
+                  fontWeight: FontWeight.bold,
+                  color: ColorSystem.primary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'EduSchool',
+              style: TextStyle(
+                fontSize: 34,
+                fontWeight: FontWeight.bold,
+                color: ColorSystem.surface,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Executive App',
+              style: TextStyle(fontSize: 18, color: ColorSystem.light),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'School Management System',
+              style: TextStyle(fontSize: 13, color: ColorSystem.light),
+            ),
+            const Spacer(flex: 4),
+            Text(
+              'Loading secure workspace...',
+              style: TextStyle(fontSize: 12, color: ColorSystem.light),
+            ),
+            const SizedBox(height: 32),
+          ],
+        ),
+        ),
+      ),
+    );
+  }
+}
