@@ -1,6 +1,6 @@
 import 'package:edu_admin/feature/student_screen/view/student_profile_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:edu_admin/model/color_system.dart';
+// import 'package:edu_admin/model/color_system.dart';
 import 'package:edu_admin/feature/student_screen/model/student_model.dart';
 
 class StudentScreen extends StatefulWidget {
@@ -105,10 +105,10 @@ class _StudentScreenState extends State<StudentScreen> {
                       ],
                     ),
                     CircleAvatar(
-                      backgroundColor: ColorSystem.light,
+                      // backgroundColor: ColorSystem.light,
                       child: Text(
                         'A',
-                        style: TextStyle(color: ColorSystem.dark),
+                        // style: TextStyle(color: ColorSystem.dark),
                       ),
                     ),
                   ],
@@ -150,7 +150,7 @@ class _StudentScreenState extends State<StudentScreen> {
                     dividerColor: Colors.transparent,
                     indicatorSize: TabBarIndicatorSize.tab,
                     indicator: BoxDecoration(
-                      color: ColorSystem.dark,
+                      // color: ColorSystem.dark,
                       borderRadius: BorderRadius.circular(25),
                     ),
                     labelColor: Colors.white,
@@ -198,9 +198,9 @@ class _StudentScreenState extends State<StudentScreen> {
           label: Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [ColorSystem.dark, ColorSystem.dark.withOpacity(0.6)],
-              ),
+              // gradient: LinearGradient(
+              // colors: [ColorSystem.dark, ColorSystem.dark.withOpacity(0.6)],
+              // ),
               borderRadius: BorderRadius.circular(30),
             ),
             child: const Row(
@@ -229,11 +229,11 @@ class _StudentScreenState extends State<StudentScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.school_outlined, size: 55, color: ColorSystem.warning),
+            // Icon(Icons.school_outlined, size: 55, color: ColorSystem.warning),
             const SizedBox(height: 12),
             Text(
               'No students found',
-              style: TextStyle(color: ColorSystem.warning),
+              // style: TextStyle(color: ColorSystem.warning),
             ),
           ],
         ),
@@ -269,11 +269,11 @@ class _StudentScreenState extends State<StudentScreen> {
               children: [
                 CircleAvatar(
                   radius: 27,
-                  backgroundColor: ColorSystem.light,
+                  // backgroundColor: ColorSystem.light,
                   child: Text(
                     student.name.isEmpty ? '?' : student.name[0].toUpperCase(),
                     style: TextStyle(
-                      color: ColorSystem.dark,
+                      // color: ColorSystem.dark,
                       fontSize: 21,
                       fontWeight: FontWeight.bold,
                     ),
