@@ -1,5 +1,4 @@
-import 'package:edu_admin/view/splash_screen.dart';
-import 'package:edu_admin/view/student_screen.dart';
+import 'package:edu_admin/view/student_screen/student_screen.dart';
 import 'package:flutter/material.dart';
 
 void main(){
