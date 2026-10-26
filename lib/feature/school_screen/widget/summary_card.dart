@@ -54,7 +54,7 @@ class SummaryCard extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: ColorSystem.light,
-                  borderRadius: BorderRadius.circular(20), 
+                  borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   '$roomsOpen Rooms Open',
@@ -79,6 +79,7 @@ class SummaryCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'Subjects $subjects  •  Unassigned $unassigned',
+            
             style: TextStyle(color: ColorSystem.muted, fontSize: 12),
           ),
         ],
