@@ -1,4 +1,4 @@
-import 'package:edu_admin/model/class_item.dart';
+import 'package:edu_admin/feature/school_screen/model/class_item.dart';
 import 'package:edu_admin/model/color_system.dart';
 import 'package:flutter/material.dart';
 

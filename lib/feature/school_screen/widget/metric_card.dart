@@ -1,5 +1,5 @@
 import 'package:edu_admin/model/color_system.dart';
-import 'package:edu_admin/widget/status_chip.dart';
+import 'package:edu_admin/feature/school_screen/widget/status_chip.dart';
 import 'package:flutter/material.dart';
 
 class MetricCard extends StatelessWidget {

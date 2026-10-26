@@ -1,9 +1,9 @@
-import 'package:edu_admin/model/class_item.dart';
+import 'package:edu_admin/feature/school_screen/model/class_item.dart';
 import 'package:edu_admin/model/color_system.dart';
-import 'package:edu_admin/model/info_item.dart';
-import 'package:edu_admin/widget/info_tile.dart';
-import 'package:edu_admin/widget/screen_header.dart';
-import 'package:edu_admin/widget/status_chip.dart';
+import 'package:edu_admin/feature/school_screen/model/info_item.dart';
+import 'package:edu_admin/feature/school_screen/widget/info_tile.dart';
+import 'package:edu_admin/feature/school_screen/widget/screen_header.dart';
+import 'package:edu_admin/feature/school_screen/widget/status_chip.dart';
 import 'package:flutter/material.dart';
 
 class ClassDetailScreen extends StatelessWidget {

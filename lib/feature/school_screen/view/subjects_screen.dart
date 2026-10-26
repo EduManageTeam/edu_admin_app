@@ -1,8 +1,8 @@
 import 'package:edu_admin/model/color_system.dart';
-import 'package:edu_admin/model/info_item.dart';
-import 'package:edu_admin/widget/info_tile.dart';
-import 'package:edu_admin/widget/screen_header.dart';
-import 'package:edu_admin/widget/search_field.dart';
+import 'package:edu_admin/feature/school_screen/model/info_item.dart';
+import 'package:edu_admin/feature/school_screen/widget/info_tile.dart';
+import 'package:edu_admin/feature/school_screen/widget/screen_header.dart';
+import 'package:edu_admin/feature/school_screen/widget/search_field.dart';
 import 'package:flutter/material.dart';
 
 class SubjectsScreen extends StatelessWidget {

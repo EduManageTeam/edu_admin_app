@@ -1,5 +1,5 @@
 import 'package:edu_admin/model/color_system.dart';
-import 'package:edu_admin/model/info_item.dart';
+import 'package:edu_admin/feature/school_screen/model/info_item.dart';
 import 'package:flutter/material.dart';
 
 class InfoTile extends StatelessWidget {

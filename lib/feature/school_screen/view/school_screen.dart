@@ -1,7 +1,7 @@
-import 'package:edu_admin/model/class_item.dart';
+import 'package:edu_admin/feature/school_screen/model/class_item.dart';
 import 'package:edu_admin/model/color_system.dart';
-import 'package:edu_admin/widget/class_card.dart';
-import 'package:edu_admin/widget/summary_card.dart';
+import 'package:edu_admin/feature/school_screen/widget/class_card.dart';
+import 'package:edu_admin/feature/school_screen/widget/summary_card.dart';
 import 'package:flutter/material.dart';
 
 class SchoolScreen extends StatefulWidget {
