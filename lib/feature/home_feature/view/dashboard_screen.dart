@@ -10,104 +10,128 @@ class DashboardScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: ColorSystem.appBG,
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20),
+        child: Column(
           children: [
-            // Header
-            Text(
-              'EDUSCHOOL • CEO',
-              style: TextStyle(
-                color: ColorSystem.primary,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Executive Overview',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: ColorSystem.lnk,
-              ),
-            ),
-            Text(
-              'Monday, 26 October 2026',
-              style: TextStyle(color: ColorSystem.muted),
-            ),
-            const SizedBox(height: 20),
-
-            // Health card
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [ColorSystem.dark, ColorSystem.primary],
-                ),
-                borderRadius: BorderRadius.circular(24),
-              ),
+            // ===== LOCKED PART (does not scroll) =====
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // Header
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'School Health Index',
-                        style: TextStyle(color: ColorSystem.light),
+                        'EDUSCHOOL • ADMIN',
+                        style: TextStyle(
+                          color: ColorSystem.primary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: ColorSystem.surface,
-                          borderRadius: BorderRadius.circular(20),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Dashboard',
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                          color: ColorSystem.lnk,
                         ),
-                        child: Text(
-                          'ON TARGET',
-                          style: TextStyle(
-                            color: ColorSystem.success,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                      ),
+                      Text(
+                        'Term 2 • Active Session • Day 48',
+                        style: TextStyle(color: ColorSystem.muted),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    '92 /100',
+                ),
+                // Avatar
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: ColorSystem.light,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'A',
                     style: TextStyle(
-                      color: ColorSystem.surface,
-                      fontSize: 44,
+                      color: ColorSystem.primary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Status banner
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: ColorSystem.info.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.circle, size: 10, color: ColorSystem.success),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Campus operations healthy',
+                      style: TextStyle(
+                        color: ColorSystem.success,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
                   Text(
-                    'Attendance, academics and staffing remain stable.',
-                    style: TextStyle(color: ColorSystem.light, fontSize: 13),
+                    '08:42 AM',
+                    style: TextStyle(color: ColorSystem.muted, fontSize: 12),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+                ],
+              ),
+            ),
 
-            // Stat cards
+            // ===== SCROLLABLE PART =====
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(20),
+                children: [
+            // Stat cards (2 x 2)
             const Row(
               children: [
-                _StatCard(title: 'Students', value: '428', note: '+12 term'),
+                _StatCard(
+                    title: 'Students', value: '14628', note: '+12 this month'),
                 SizedBox(width: 12),
-                _StatCard(title: 'Teachers', value: '32', note: '31 active'),
+                _StatCard(title: 'Teachers', value: '302', note: '31 active'),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Row(
+              children: [
+                _StatCard(
+                    title: 'Parents', value: '356', note: 'Linked accounts'),
                 SizedBox(width: 12),
-                _StatCard(title: 'Classes', value: '18', note: 'All staffed'),
+                _StatCard(
+                    title: 'Classes', value: '18', note: 'Across all grades'),
               ],
             ),
             const SizedBox(height: 24),
 
             // Attendance
             Text(
-              'Today at a glance',
+              "Today's Attendance",
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -116,54 +140,81 @@ class DashboardScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 color: ColorSystem.surface,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: ColorSystem.border),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Text(
-                    "Today's Attendance",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: ColorSystem.lnk,
+                  // Left: big percentage
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '92%',
+                        style: TextStyle(
+                          color: ColorSystem.success,
+                          fontSize: 38,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'Present today',
+                        style:
+                            TextStyle(color: ColorSystem.muted, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 20),
+                  // Right: chips + bar
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _Chip(
+                              text: '395 Present',
+                              color: ColorSystem.success,
+                            ),
+                            _Chip(
+                              text: '18 Absent',
+                              color: ColorSystem.danger,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          '10 Late • 5 Permission',
+                          style:
+                              TextStyle(color: ColorSystem.muted, fontSize: 12),
+                        ),
+                        const SizedBox(height: 10),
+                        LinearPercentIndicator(
+                          padding: EdgeInsets.zero,
+                          percent: 0.92,
+                          lineHeight: 8,
+                          animation: true,
+                          animationDuration: 800,
+                          barRadius: const Radius.circular(8),
+                          progressColor: ColorSystem.success,
+                          backgroundColor: ColorSystem.border,
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '92.3%',
-                    style: TextStyle(
-                      color: ColorSystem.success,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    '395 present • 18 absent • 10 late',
-                    style: TextStyle(color: ColorSystem.muted, fontSize: 12),
-                  ),
-                  const SizedBox(height: 12),
-                  LinearPercentIndicator(
-                    padding: EdgeInsets.zero,
-                    percent: 0.923,
-                    lineHeight: 8,
-                    animation: true,
-                    animationDuration: 800,
-                    barRadius: const Radius.circular(8),
-                    progressColor: ColorSystem.success,
-                    backgroundColor: ColorSystem.border,
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
 
-            // Leadership signals
+            // Requires review
             Text(
-              'Leadership signals',
+              'Requires Review',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -171,20 +222,21 @@ class DashboardScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            _SignalTile(
-              letter: 'G',
-              title: 'Grade 3B',
-              subtitle: 'Attendance below target · 89%',
-              color: ColorSystem.warning.withValues(alpha: 0.12),
-              letterColor: ColorSystem.warning,
+            _ReviewTile(
+              number: '3',
+              title: '3 unexcused absences',
+              subtitle: 'Immediate guardian follow-up required',
+              color: ColorSystem.warning,
             ),
             const SizedBox(height: 10),
-            _SignalTile(
-              letter: 'M',
-              title: 'Monthly report',
-              subtitle: 'October executive summary is ready',
-              color: ColorSystem.info.withValues(alpha: 0.12),
-              letterColor: ColorSystem.info,
+            _ReviewTile(
+              number: '2',
+              title: '2 classes pending roll call',
+              subtitle: 'Assign cover before 9:15 AM',
+              color: ColorSystem.info,
+            ),
+                ],
+              ),
             ),
           ],
         ),
@@ -193,6 +245,7 @@ class DashboardScreen extends StatelessWidget {
   }
 }
 
+// Small stat card (Students, Teachers, ...)
 class _StatCard extends StatelessWidget {
   final String title;
   final String value;
@@ -208,7 +261,7 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: ColorSystem.surface,
           borderRadius: BorderRadius.circular(18),
@@ -223,7 +276,7 @@ class _StatCard extends StatelessWidget {
             Text(
               value,
               style: TextStyle(
-                fontSize: 26,
+                fontSize: 30,
                 fontWeight: FontWeight.bold,
                 color: ColorSystem.lnk,
               ),
@@ -238,19 +291,45 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-class _SignalTile extends StatelessWidget {
-  final String letter;
+// Rounded label (395 Present / 18 Absent)
+class _Chip extends StatelessWidget {
+  final String text;
+  final Color color;
+
+  const _Chip({required this.text, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+// Row in "Requires Review"
+class _ReviewTile extends StatelessWidget {
+  final String number;
   final String title;
   final String subtitle;
   final Color color;
-  final Color letterColor;
 
-  const _SignalTile({
-    required this.letter,
+  const _ReviewTile({
+    required this.number,
     required this.title,
     required this.subtitle,
     required this.color,
-    required this.letterColor,
   });
 
   @override
@@ -268,16 +347,13 @@ class _SignalTile extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: color,
+              color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
             alignment: Alignment.center,
             child: Text(
-              letter,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: letterColor,
-              ),
+              number,
+              style: TextStyle(fontWeight: FontWeight.bold, color: color),
             ),
           ),
           const SizedBox(width: 12),
@@ -292,6 +368,7 @@ class _SignalTile extends StatelessWidget {
                     color: ColorSystem.lnk,
                   ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   subtitle,
                   style: TextStyle(color: ColorSystem.muted, fontSize: 12),
