@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import '../../../model/color_system.dart';
-import '../service/auth_service.dart';
-import 'dashboard_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SignInScreen extends StatefulWidget {
+import '../../../model/color_system.dart';
+import '../../main_shell/main_screen.dart';
+import '../provider/auth_provider.dart';
+
+class SignInScreen extends ConsumerStatefulWidget {
   const SignInScreen({super.key});
 
   @override
-  State<SignInScreen> createState() => _SignInScreenState();
+  ConsumerState<SignInScreen> createState() => _SignInScreenState();
 }
 
-class _SignInScreenState extends State<SignInScreen> {
-  bool _hidePassword = true; // true = dots, false = show text
-  bool _loading = false;
-  String? _error;
+class _SignInScreenState extends ConsumerState<SignInScreen> {
+  bool _hidePassword = true;
 
   final _userIdController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -26,31 +26,18 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   Future<void> _signIn() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-
-    try {
-      await AuthService.login(
-        _userIdController.text.trim(),
-        _passwordController.text,
-      );
-      if (!mounted) return;
+    final success = await ref
+        .read(authNotifierProvider.notifier)
+        .login(_userIdController.text.trim(), _passwordController.text);
+    if (!mounted) return;
+    if (success) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        MaterialPageRoute(builder: (_) => const MainScreen()),
       );
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e.toString().replaceFirst('Exception: ', '');
-        _loading = false;
-      });
     }
   }
 
-  // Shared style for the text fields
   InputDecoration _inputStyle(String hint, {Widget? suffixIcon}) {
     return InputDecoration(
       hintText: hint,
@@ -70,43 +57,48 @@ class _SignInScreenState extends State<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authNotifierProvider);
+
     return Scaffold(
       backgroundColor: ColorSystem.appBG,
-      body: Column(
-        children: [
-          // Red header
-          Container(
-            width: double.infinity,
-            color: ColorSystem.primary,
-            padding: const EdgeInsets.fromLTRB(24, 70, 24, 40),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'EduSchool',
-                  style: TextStyle(color: ColorSystem.surface, fontSize: 20),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Executive Portal',
-                  style: TextStyle(
-                    color: ColorSystem.surface,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
+      // The WHOLE page scrolls, so the keyboard never causes an overflow
+      body: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Red header
+            Container(
+              width: double.infinity,
+              color: ColorSystem.primary,
+              padding: const EdgeInsets.fromLTRB(24, 70, 24, 40),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'EduSchool',
+                    style: TextStyle(color: ColorSystem.surface, fontSize: 20),
                   ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Secure school leadership access',
-                  style: TextStyle(color: ColorSystem.light, fontSize: 13),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  Text(
+                    'Executive Portal',
+                    style: TextStyle(
+                      color: ColorSystem.surface,
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Secure school leadership access',
+                    style: TextStyle(color: ColorSystem.light, fontSize: 13),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          // Form
-          Expanded(
-            child: Padding(
+            // Form
+            Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,11 +166,11 @@ class _SignInScreenState extends State<SignInScreen> {
                       ),
                     ),
                   ),
-                  if (_error != null)
+                  if (authState.error != null)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Text(
-                        _error!,
+                        authState.error!,
                         style: TextStyle(
                           color: ColorSystem.danger,
                           fontSize: 12,
@@ -197,8 +189,8 @@ class _SignInScreenState extends State<SignInScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      onPressed: _loading ? null : _signIn,
-                      child: _loading
+                      onPressed: authState.isLoading ? null : _signIn,
+                      child: authState.isLoading
                           ? const SizedBox(
                               width: 22,
                               height: 22,
@@ -224,8 +216,8 @@ class _SignInScreenState extends State<SignInScreen> {
                 ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

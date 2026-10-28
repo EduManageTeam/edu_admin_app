@@ -1,5 +1,5 @@
 import 'package:edu_admin/model/color_system.dart';
-import 'package:edu_admin/feature/profile_screen/model/student_model.dart';
+import 'package:edu_admin/feature/profile_screen/model/admin_model.dart';
 import 'package:flutter/material.dart';
 
 class StudentProfileScreen extends StatelessWidget {
@@ -49,11 +49,7 @@ class StudentProfileScreen extends StatelessWidget {
                         ? NetworkImage(student.photo!)
                         : null,
                     child: student.photo == null || student.photo!.isEmpty
-                        ? Icon(
-                            Icons.person,
-                            size: 52,
-                            color: ColorSystem.lnk,
-                          )
+                        ? Icon(Icons.person, size: 52, color: ColorSystem.lnk)
                         : null,
                   ),
                   const SizedBox(height: 16),
@@ -199,11 +195,7 @@ class StudentProfileScreen extends StatelessWidget {
                   color: ColorSystem.lnk.withOpacity(0.10),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(
-                  icon,
-                  size: 20,
-                  color: ColorSystem.lnk,
-                ),
+                child: Icon(icon, size: 20, color: ColorSystem.lnk),
               ),
               const SizedBox(width: 12),
               Expanded(

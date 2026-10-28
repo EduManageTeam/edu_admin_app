@@ -5,7 +5,7 @@
 <application
     android:usesCleartextTraffic="true"
 
-        android:label="edu_admin"
+        android:label="Edu Admin"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
