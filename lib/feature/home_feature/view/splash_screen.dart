@@ -1,6 +1,7 @@
-import 'package:edu_admin/feature/home_feature/view/sigin_screen.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../model/color_system.dart';
+import 'sigin_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -10,9 +11,26 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  Timer? _dotsTimer;
+  int _dots = 1; // 1 -> 2 -> 3 -> back to 1
+
+  @override
+  void dispose() {
+    _dotsTimer?.cancel();
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
+
+    // Animate the dots: "." -> ".." -> "..." and loop
+    _dotsTimer = Timer.periodic(const Duration(milliseconds: 400), (_) {
+      setState(() {
+        _dots = _dots == 3 ? 1 : _dots + 1;
+      });
+    });
+
     // Go to sign in after 2 seconds
     Future.delayed(const Duration(seconds: 2), () {
       if (!mounted) return;
@@ -72,7 +90,8 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const Spacer(flex: 4),
             Text(
-              'Loading secure workspace...',
+              // Spaces keep the text from shifting while the dots change
+              'Loading secure workspace${'.' * _dots}${' ' * (3 - _dots)}',
               style: TextStyle(fontSize: 12, color: ColorSystem.light),
             ),
             const SizedBox(height: 32),
