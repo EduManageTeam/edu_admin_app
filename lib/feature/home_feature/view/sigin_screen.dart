@@ -1,14 +1,60 @@
 import 'package:flutter/material.dart';
 import '../../../model/color_system.dart';
+import '../service/auth_service.dart';
 import 'dashboard_screen.dart';
 
-class SignInScreen extends StatelessWidget {
+class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
 
+  @override
+  State<SignInScreen> createState() => _SignInScreenState();
+}
+
+class _SignInScreenState extends State<SignInScreen> {
+  bool _hidePassword = true; // true = dots, false = show text
+  bool _loading = false;
+  String? _error;
+
+  final _userIdController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _userIdController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _signIn() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      await AuthService.login(
+        _userIdController.text.trim(),
+        _passwordController.text,
+      );
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString().replaceFirst('Exception: ', '');
+        _loading = false;
+      });
+    }
+  }
+
   // Shared style for the text fields
-  InputDecoration _inputStyle(String hint) {
+  InputDecoration _inputStyle(String hint, {Widget? suffixIcon}) {
     return InputDecoration(
       hintText: hint,
+      suffixIcon: suffixIcon,
       filled: true,
       fillColor: ColorSystem.surface,
       enabledBorder: OutlineInputBorder(
@@ -87,7 +133,10 @@ class SignInScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  TextField(decoration: _inputStyle('CEO-001')),
+                  TextField(
+                    controller: _userIdController,
+                    decoration: _inputStyle('CEO-001'),
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     'Password',
@@ -98,8 +147,22 @@ class SignInScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   TextField(
-                    obscureText: true,
-                    decoration: _inputStyle('••••••••'),
+                    controller: _passwordController,
+                    obscureText: _hidePassword,
+                    decoration: _inputStyle(
+                      '••••••••',
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _hidePassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          color: ColorSystem.muted,
+                        ),
+                        onPressed: () {
+                          setState(() => _hidePassword = !_hidePassword);
+                        },
+                      ),
+                    ),
                   ),
                   Align(
                     alignment: Alignment.centerRight,
@@ -111,6 +174,17 @@ class SignInScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (_error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(
+                        _error!,
+                        style: TextStyle(
+                          color: ColorSystem.danger,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
                   const SizedBox(height: 8),
                   SizedBox(
                     width: double.infinity,
@@ -123,18 +197,20 @@ class SignInScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const DashboardScreen(),
-                          ),
-                        );
-                      },
-                      child: const Text(
-                        'Sign in',
-                        style: TextStyle(fontSize: 16),
-                      ),
+                      onPressed: _loading ? null : _signIn,
+                      child: _loading
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Sign in',
+                              style: TextStyle(fontSize: 16),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 20),

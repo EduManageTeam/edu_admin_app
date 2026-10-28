@@ -1,68 +1,81 @@
-import 'dart:async';
-
+import 'package:edu_admin/feature/home_feature/service/auth_service.dart';
 import 'package:edu_admin/feature/teacher_screen/model/teacher_model.dart';
+import 'package:edu_admin/feature/teacher_screen/model/teacher_response_model.dart';
 import 'package:edu_admin/feature/teacher_screen/service/teacher_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
-class TeacherNotifier extends AsyncNotifier<List<TeacherModel>> {
-  final TeacherService service = TeacherService();
+// Authentication token state
+final authTokenProvider = FutureProvider<String?>((ref) async {
+  return await AuthService.getToken();
+});
 
+// Teacher service provider
+final teacherServiceProvider = FutureProvider<TeacherService>((ref) async {
+  final token = await ref.watch(authTokenProvider.future);
+
+  if (token == null || token.trim().isEmpty) {
+    throw StateError('Admin is not logged in');
+  }
+
+  return TeacherService(token: token);
+});
+
+// Search state
+final teacherSearchProvider = StateProvider<String>((ref) => '');
+
+// Status filter state
+final teacherStatusProvider = StateProvider<String>((ref) => 'all');
+
+class TeacherNotifier extends AsyncNotifier<TeacherResponse> {
+  Future<TeacherService> get service => ref.read(teacherServiceProvider.future);
+  // get all, search, filter, statistic
   @override
-  Future<List<TeacherModel>> build() async {
-    return await service.getAllTeacher();
+  Future<TeacherResponse> build() async {
+    final search = ref.watch(teacherSearchProvider);
+    final status = ref.watch(teacherStatusProvider);
+
+    final teacherService = await ref.watch(teacherServiceProvider.future);
+
+    return teacherService.getTeachers(search: search, status: status);
   }
 
-  // reload all teacher data
+  // reload all teacher
   Future<void> loading() async {
-    state = AsyncLoading();
-    // auto catches errors & turn it to AsynError state
-    state = await AsyncValue.guard(() => service.getAllTeacher());
+    ref.invalidateSelf();
+    await future;
   }
 
-  // add new teacher
+  // add 
   Future<void> addTeacher(TeacherModel teacher) async {
-    state = const AsyncLoading();
-    final newTeacher = await service.addTeacher(teacher);
+    final teacherService = await service;
 
-    if (newTeacher != null) {
-      // Success: Refresh the list from the database
-      await loading();
-    } else {
-      await loading();
-      throw Exception("Failed to add teacher. Please try again.");
-    }
+    await teacherService.addTeacher(teacher);
+
+    ref.invalidateSelf();
   }
 
-  // update teacher
+  // update
   Future<void> updateTeacher(int id, TeacherModel teacher) async {
-    state = const AsyncLoading();
-    final updatedTeacher = await service.updateTeacher(id, teacher.toJson());
+    final teacherService = await service;
 
-    if (updatedTeacher != null) {
-      await loading(); // Success
-    } else {
-      await loading();
-      throw Exception("Failed to update teacher. Please try again."); // Failure
-    }
+    await teacherService.updateTeacher(id, teacher.toJson());
+
+    ref.invalidateSelf();
   }
 
-  // delete teacher
+  // delete
   Future<void> deleteTeacher(int id) async {
-    state = const AsyncLoading();
-    final success = await service.deleteTeacher(id);
+    final teacherService = await service;
 
-    if (success) {
-      await loading(); // Success
-    } else {
-      await loading();
-      throw Exception(
-        "Failed to delete teacher. They may have already been removed.",
-      ); // Failure
-    }
+    await teacherService.deleteTeacher(id);
+
+    ref.invalidateSelf();
   }
 }
 
-final teacherProvider =
-    AsyncNotifierProvider<TeacherNotifier, List<TeacherModel>>(
-      TeacherNotifier.new,
-    );
+
+// Teacher state provider
+final teacherProvider = AsyncNotifierProvider<TeacherNotifier, TeacherResponse>(
+  TeacherNotifier.new,
+);

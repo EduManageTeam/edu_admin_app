@@ -11,6 +11,6 @@ class ColorSystem {
   static final success = Color(0xff027A48);
   static final warning = Color(0xffB54708);
   static final border = Color(0xffE4E7EC);
-  static final danger  = Color(0xffB42318);
+  static final danger = Color(0xffB42318);
   static final info = Color(0xff175CD3);
 }

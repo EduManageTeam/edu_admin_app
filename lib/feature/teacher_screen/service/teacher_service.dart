@@ -1,110 +1,227 @@
-// ignore_for_file: avoid_print
-
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:edu_admin/feature/home_feature/config/api_config.dart';
 import 'package:edu_admin/feature/teacher_screen/model/teacher_model.dart';
+import 'package:edu_admin/feature/teacher_screen/model/teacher_response_model.dart';
+import 'package:edu_admin/feature/teacher_screen/service/exceptions/teacher_api_exception.dart';
 import 'package:http/http.dart' as http;
 
 class TeacherService {
-  String baseUrl = "https://edu-api-7c7t.onrender.com/api/teachers";
+  final String token;
 
-  // GET ALL TEACHERS
-  Future<List<TeacherModel>> getAllTeacher() async {
-    try {
-      var response = await http.get(Uri.parse(baseUrl));
-      if (response.statusCode == 200) {
-        var json = jsonDecode(response.body) as Map<String, dynamic>;
-        var data = json['data'] as List? ?? [];
-        return data.map((e) => TeacherModel.fromJson(e)).toList();
-      }
-      return [];
-    } catch (e) {
-      print("Error: $e");
-      return [];
+  TeacherService({required this.token}) {
+    if (token.trim().isEmpty) {
+      throw ArgumentError('Authentication token is required');
     }
   }
 
-  // ADD TEACHER
-  Future<TeacherModel?> addTeacher(TeacherModel teacher) async {
+  String get baseUrl => '${ApiConfig.baseUrl}/teachers';
+
+  Map<String, String> get headers => {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer $token',
+  };
+
+  // DECODE JSON
+  Map<String, dynamic> _decodeJson(String body) {
     try {
-      var response = await http.post(
-        Uri.parse(baseUrl),
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-        },
-        body: jsonEncode(teacher.toJson()),
+      final decoded = jsonDecode(body);
+
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+    } catch (_) {
+      // Handle
+    }
+
+    throw const TeacherApiException('Invalid response from server.');
+  }
+
+  // check api reponse
+  void _checkResponse(http.Response response) {
+    final status = response.statusCode;
+
+    if (status >= 200 && status < 300) {
+      return;
+    }
+
+    switch (status) {
+      case 401:
+        throw const TeacherApiException(
+          'Your session has expired. Please log in again.',
+          statusCode: 401,
+        );
+
+      case 403:
+        throw const TeacherApiException(
+          'You do not have permission.',
+          statusCode: 403,
+        );
+
+      case 404:
+        throw const TeacherApiException('Teacher not found.', statusCode: 404);
+
+      case 422:
+        final json = _decodeJson(response.body);
+        final rawErrors = json['errors'];
+
+        throw TeacherApiException(
+          'Please check the entered information.',
+          statusCode: 422,
+          errors: rawErrors is Map ? Map<String, dynamic>.from(rawErrors) : {},
+        );
+
+      case 429:
+        throw const TeacherApiException(
+          'Too many requests. Please try again later.',
+          statusCode: 429,
+        );
+
+      default:
+        throw TeacherApiException(
+          status >= 500
+              ? 'Server error. Please try again later.'
+              : 'Request failed. Please try again.',
+          statusCode: status,
+        );
+    }
+  }
+
+  // send request
+  Future<http.Response> _request(
+    Future<http.Response> Function() action,
+  ) async {
+    try {
+      final response = await action().timeout(ApiConfig.timeout);
+
+      _checkResponse(response);
+
+      return response;
+    } on TeacherApiException {
+      rethrow;
+    } on TimeoutException {
+      throw const TeacherApiException(
+        'Connection timed out. Please try again.',
       );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        var json = jsonDecode(response.body) as Map<String, dynamic>;
-        return TeacherModel.fromJson(json['data'] ?? json);
-      }
-      return null;
-    } catch (e) {
-      print('Error adding teacher: $e');
-      return null;
+    } on http.ClientException {
+      throw const TeacherApiException('Unable to connect to the server.');
     }
   }
 
-  // UPDATE TEACHER
-  Future<TeacherModel?> updateTeacher(
+  // search, filter, statistic
+  Future<TeacherResponse> getTeachers({
+    String search = '',
+    String status = 'all',
+  }) async {
+    final searchText = search.trim();
+
+    // validate text
+    if (searchText.length > 100) {
+      throw ArgumentError('Search cannot exceed 100 characters');
+    }
+
+    // validate filter
+    if (!['all', 'active', 'inactive'].contains(status)) {
+      throw ArgumentError('Invalid teacher status');
+    }
+
+    // query parameter
+    final query = <String, String>{};
+
+    if (searchText.isNotEmpty) {
+      query['search'] = searchText;
+    }
+
+    if (status != 'all') {
+      query['status'] = status;
+    }
+
+    final uri = Uri.parse(baseUrl)
+        .replace(queryParameters: query.isEmpty ? null : query);
+
+    // send api request
+    final response = await _request(() => http.get(uri, headers: headers));
+
+    final json = _decodeJson(response.body);
+
+    try {
+      return TeacherResponse.fromJson(json);
+    } catch (_) {
+      throw const TeacherApiException('Unable to read teacher information.');
+    }
+  }
+
+  // get all teachers
+  Future<List<TeacherModel>> getAllTeacher() async {
+    final response = await getTeachers();
+    return response.teachers;
+  }
+
+  // add
+  Future<TeacherModel> addTeacher(TeacherModel teacher) async {
+    final response = await _request(
+      () => http.post(
+        Uri.parse(baseUrl),
+        headers: headers,
+        body: jsonEncode(teacher.toJson()),
+      ),
+    );
+
+    final json = _decodeJson(response.body);
+
+    try {
+      return TeacherModel.fromJson(
+        Map<String, dynamic>.from(json['data'] ?? json),
+      );
+    } catch (_) {
+      throw const TeacherApiException(
+        'Teacher may have been created, but the response is invalid.',
+      );
+    }
+  }
+
+  // update
+  Future<TeacherModel> updateTeacher(
     int id,
     Map<String, dynamic> updateFields,
   ) async {
-    try {
-      var response = await http.patch(
-        Uri.parse("$baseUrl/$id"),
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-        },
-        body: jsonEncode(updateFields),
-      );
+    if (id <= 0) {
+      throw ArgumentError('Invalid teacher ID');
+    }
 
-      if (response.statusCode == 200) {
-        var json = jsonDecode(response.body) as Map<String, dynamic>;
-        return TeacherModel.fromJson(json['data'] ?? json);
-      } else if (response.statusCode == 404) {
-        print("Teacher not found. The ID might be incorrect");
-        return null;
-      } else if (response.statusCode == 422 || response.statusCode == 400) {
-        print("Invalid data. Please check the fields and try again.");
-        return null;
-      } else {
-        print(
-          "Failed to update. Server responded with status: ${response.statusCode}",
-        );
-        return null;
-      }
-    } catch (e) {
-      print("Network or update error: $e");
-      return null;
+    final response = await _request(
+      () => http.patch(
+        Uri.parse('$baseUrl/$id'),
+        headers: headers,
+        body: jsonEncode(updateFields),
+      ),
+    );
+
+    final json = _decodeJson(response.body);
+
+    try {
+      return TeacherModel.fromJson(
+        Map<String, dynamic>.from(json['data'] ?? json),
+      );
+    } catch (_) {
+      throw const TeacherApiException(
+        'Teacher may have been updated, but the response is invalid.',
+      );
     }
   }
 
-  // DELETE TEACHER
+  // delete
   Future<bool> deleteTeacher(int id) async {
-    try {
-      var response = await http.delete(
-        Uri.parse("$baseUrl/$id"),
-        headers: {"Accept": "application/json"},
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        return true;
-      } else if (response.statusCode == 404) {
-        // ignore: duplicate_ignore
-        // ignore: avoid_print
-        print("Teacher not found. They may have already been deleted.");
-        return false;
-      } else {
-        print("Failed to delete teacher. Status: ${response.statusCode}");
-        return false;
-      }
-    } catch (e) {
-      print("Network or deletion error: $e");
-      return false;
+    if (id <= 0) {
+      throw ArgumentError('Invalid teacher ID');
     }
+
+    await _request(
+      () => http.delete(Uri.parse('$baseUrl/$id'), headers: headers),
+    );
+
+    return true;
   }
 }

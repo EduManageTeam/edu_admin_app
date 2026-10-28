@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 Widget teacherCard(
   BuildContext context,
   String name,
-  String subject,
+  String phone,
   String status,
 ) {
   bool isActive = status == "Active";
@@ -42,7 +42,7 @@ Widget teacherCard(
         children: [
           SizedBox(height: 5),
           Text(
-            subject,
+            phone,
             style: TextStyle(fontSize: 11, color: ColorSystem.muted),
           ),
           SizedBox(height: 8),

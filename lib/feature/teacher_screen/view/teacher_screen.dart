@@ -1,3 +1,4 @@
+import 'package:edu_admin/feature/teacher_screen/provider/teacher_proivder.dart';
 import 'package:edu_admin/feature/teacher_screen/view/widgets/teacher_card.dart';
 import 'package:edu_admin/model/color_system.dart';
 import 'package:edu_admin/feature/teacher_screen/view/addteacher_screen.dart';
@@ -8,6 +9,8 @@ class TeacherScreen extends ConsumerWidget {
   const TeacherScreen({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final teacherData = ref.watch(teacherProvider);
+
     return Scaffold(
       backgroundColor: ColorSystem.light,
       body: SafeArea(
@@ -132,13 +135,17 @@ class TeacherScreen extends ConsumerWidget {
                             ),
                           ),
                           SizedBox(height: 8),
-                          Text(
-                            "31",
-                            style: TextStyle(
-                              fontSize: 30,
-                              fontWeight: FontWeight.bold,
-                              color: ColorSystem.lnk,
+                          teacherData.when(
+                            data: (response) => Text(
+                              response.stats.assigned.toString(),
+                              style: TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.bold,
+                                color: ColorSystem.lnk,
+                              ),
                             ),
+                            loading: () => Text('...'),
+                            error: (error, stack) => Text('--'),
                           ),
                         ],
                       ),
@@ -156,13 +163,17 @@ class TeacherScreen extends ConsumerWidget {
                             ),
                           ),
                           SizedBox(height: 8),
-                          Text(
-                            "30",
-                            style: TextStyle(
-                              fontSize: 30,
-                              fontWeight: FontWeight.bold,
-                              color: ColorSystem.success,
+                          teacherData.when(
+                            data: (data) => Text(
+                              data.stats.onDuty.toString(),
+                              style: TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.bold,
+                                color: ColorSystem.success,
+                              ),
                             ),
+                            loading: () => const Text('...'),
+                            error: (error, stack) => const Text('--'),
                           ),
                         ],
                       ),
@@ -180,13 +191,17 @@ class TeacherScreen extends ConsumerWidget {
                             ),
                           ),
                           SizedBox(height: 8),
-                          Text(
-                            "1",
-                            style: TextStyle(
-                              fontSize: 30,
-                              fontWeight: FontWeight.bold,
-                              color: ColorSystem.danger,
+                          teacherData.when(
+                            data: (data) => Text(
+                              data.stats.onLeave.toString(),
+                              style: TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.bold,
+                                color: ColorSystem.danger,
+                              ),
                             ),
+                            loading: () => const Text('...'),
+                            error: (error, stack) => const Text('--'),
                           ),
                         ],
                       ),
@@ -197,27 +212,62 @@ class TeacherScreen extends ConsumerWidget {
 
               SizedBox(height: 15),
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 2,
-                    vertical: 4,
+                child: teacherData.when(
+                  // LOADING
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+
+                  // ERROR
+                  error: (error, stackTrace) => Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Unable to load teachers',
+                          style: TextStyle(color: ColorSystem.danger),
+                        ),
+                        SizedBox(height: 10),
+                        TextButton(
+                          onPressed: () {
+                            ref.invalidate(teacherProvider);
+                          },
+                          child:  Text('Try again'),
+                        ),
+                      ],
+                    ),
                   ),
 
-                  children: [
-                    teacherCard(
-                      context,
-                      "Sarah Johnson",
-                      "Mathematics • Grade 1A",
-                      "Active",
-                    ),
+                  // SUCCESS
+                  data: (response) {
+                    final teachers = response.teachers;
 
-                    teacherCard(
-                      context,
-                      "Michael Brown",
-                      "PE • Grade 3B",
-                      "On leave",
-                    ),
-                  ],
+                    if (teachers.isEmpty) {
+                      return Center(
+                        child: Text(
+                          'No teachers found',
+                          style: TextStyle(color: ColorSystem.muted),
+                        ),
+                      );
+                    }
+                    return ListView.builder(
+                      padding: const EdgeInsets.only(
+                        left: 2,
+                        right: 2,
+                        top: 4,
+                        bottom: 100,
+                      ),
+                      itemCount: teachers.length,
+                      itemBuilder: (context, index) {
+                        final teacher = teachers[index];
+                        return teacherCard(
+                          context,
+                          teacher.name,
+                          teacher.phone ?? 'No phone number',
+                          teacher.status,
+                        );
+                      },
+                    );
+                  },
                 ),
               ),
             ],

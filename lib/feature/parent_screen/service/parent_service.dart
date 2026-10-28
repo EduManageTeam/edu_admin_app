@@ -1,110 +1,200 @@
-// ignore_for_file: avoid_print
-
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:edu_admin/feature/home_feature/config/api_config.dart';
 import 'package:edu_admin/feature/parent_screen/model/parent_model.dart';
+import 'package:edu_admin/feature/parent_screen/service/exceptions/parent_api_exception.dart';
 import 'package:http/http.dart' as http;
 
 class ParentService {
-  String baseUrl = "https://edu-api-7c7t.onrender.com/api/parents";
+  final String token;
 
-  // get all
-  Future<List<ParentModel>> getAllParents() async {
-    try {
-      var response = await http.get(Uri.parse(baseUrl));
-      if (response.statusCode == 200) {
-        var json = jsonDecode(response.body) as Map<String, dynamic>;
-        var data = json['data'] as List? ?? [];
-        return data.map((e) => ParentModel.fromJson(e)).toList();
-      }
-      return [];
-    } catch (e) {
-      print("Error: $e");
-      return [];
+  ParentService({required this.token}) {
+    if (token.trim().isEmpty) {
+      throw ArgumentError('Authentication token is required');
     }
   }
 
-  // add
-  Future<ParentModel?> addParent(ParentModel parent) async {
-    try {
-      var response = await http.post(
-        Uri.parse(baseUrl),
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-        },
-        body: jsonEncode(parent.toJson()),
-      );
+  String get baseUrl => "${ApiConfig.baseUrl}/parents";
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        var json = jsonDecode(response.body) as Map<String, dynamic>;
-        return ParentModel.fromJson(json['data'] ?? json);
+  Map<String, String> get headers => {
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+    "Authorization": "Bearer $token",
+  };
+
+  // decode json
+  Map<String, dynamic> _decodeJson(String body) {
+    try {
+      final decoded = jsonDecode(body);
+
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
       }
-      return null;
-    } catch (e) {
-      print('Error adding parent: $e');
-      return null;
+    } catch (_) {
+      // return safe error
+    }
+
+    throw const ParentApiException("Invalid response from server.");
+  }
+
+  // api response error
+  void _checkResponse(http.Response response) {
+    final status = response.statusCode;
+
+    if (status >= 200 && status < 300) {
+      return;
+    }
+
+    switch (status) {
+      case 401:
+        throw const ParentApiException(
+          "Your session has expired. Please log in again.",
+          statusCode: 401,
+        );
+
+      case 403:
+        throw const ParentApiException(
+          "You do not have permission.",
+          statusCode: 403,
+        );
+
+      case 404:
+        throw const ParentApiException(
+          "Parent record not found.",
+          statusCode: 404,
+        );
+
+      case 422:
+        final json = _decodeJson(response.body);
+        final rawErrors = json['errors'];
+
+        throw ParentApiException(
+          "Please check the entered information.",
+          statusCode: 422,
+          errors: rawErrors is Map ? Map<String, dynamic>.from(rawErrors) : {},
+        );
+
+      case 429:
+        throw const ParentApiException(
+          "Too many requests. Please try again later.",
+          statusCode: 429,
+        );
+
+      default:
+        throw ParentApiException(
+          status >= 500
+              ? "Server error. Please try again later."
+              : "Request failed. Please try again.",
+          statusCode: status,
+        );
+    }
+  }
+
+  // send resquest
+  Future<http.Response> _request(
+    Future<http.Response> Function() action,
+  ) async {
+    try {
+      final response = await action().timeout(ApiConfig.timeout);
+
+      _checkResponse(response);
+
+      return response;
+    } on ParentApiException {
+      rethrow;
+    } on TimeoutException {
+      throw const ParentApiException("Connection timed out. Please try again.");
+    } on http.ClientException {
+      throw const ParentApiException("Unable to connect to the server.");
+    }
+  }
+
+  // get all
+  Future<List<ParentModel>> getAllParents() async {
+    final response = await _request(
+      () => http.get(Uri.parse(baseUrl), headers: headers),
+    );
+
+    final json = _decodeJson(response.body);
+    final data = json['data'];
+
+    if (data is! List) {
+      throw const ParentApiException("Invalid parent list response.");
+    }
+
+    try {
+      return data.map((item) {
+        return ParentModel.fromJson(Map<String, dynamic>.from(item as Map));
+      }).toList();
+    } catch (_) {
+      throw const ParentApiException("Unable to read parent information.");
+    }
+  }
+
+  // create or add
+  Future<ParentModel> addParent(ParentModel parent) async {
+    final response = await _request(
+      () => http.post(
+        Uri.parse(baseUrl),
+        headers: headers,
+        body: jsonEncode(parent.toJson()),
+      ),
+    );
+
+    final json = _decodeJson(response.body);
+
+    try {
+      return ParentModel.fromJson(
+        Map<String, dynamic>.from(json['data'] ?? json),
+      );
+    } catch (_) {
+      throw const ParentApiException(
+        "Parent may have been created, but the response is invalid.",
+      );
     }
   }
 
   // update
-  Future<ParentModel?> updateParent(
+  Future<ParentModel> updateParent(
     int id,
     Map<String, dynamic> updateFields,
   ) async {
-    try {
-      var response = await http.patch(
-        Uri.parse("$baseUrl/$id"),
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-        },
-        body: jsonEncode(updateFields),
-      );
+    if (id <= 0) {
+      throw ArgumentError("Invalid parent ID");
+    }
 
-      if (response.statusCode == 200) {
-        var json = jsonDecode(response.body) as Map<String, dynamic>;
-        return ParentModel.fromJson(json['data'] ?? json);
-      } else if (response.statusCode == 404) {
-        print("Parent not found. The ID might be incorrect");
-        return null;
-      } else if (response.statusCode == 422 || response.statusCode == 400) {
-        print("Invalid data. Please check the fields and try again.");
-        return null;
-      } else {
-        print(
-          "Failed to update. Server responded with status: ${response.statusCode}",
-        );
-        return null;
-      }
-    } catch (e) {
-      print("Network or update error: $e");
-      return null;
+    final response = await _request(
+      () => http.patch(
+        Uri.parse("$baseUrl/$id"),
+        headers: headers,
+        body: jsonEncode(updateFields),
+      ),
+    );
+
+    final json = _decodeJson(response.body);
+
+    try {
+      return ParentModel.fromJson(
+        Map<String, dynamic>.from(json['data'] ?? json),
+      );
+    } catch (_) {
+      throw const ParentApiException(
+        "Parent may have been updated, but the response is invalid.",
+      );
     }
   }
 
   // delete
   Future<bool> deleteParent(int id) async {
-    try {
-      var response = await http.delete(
-        Uri.parse("$baseUrl/$id"),
-        headers: {"Accept": "application/json"},
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        return true;
-      } else if (response.statusCode == 404) {
-        // ignore: duplicate_ignore
-        // ignore: avoid_print
-        print("Parent not found. They may have already been deleted.");
-        return false;
-      } else {
-        print("Failed to delete parent. Status: ${response.statusCode}");
-        return false;
-      }
-    } catch (e) {
-      print("Network or deletion error: $e");
-      return false;
+    if (id <= 0) {
+      throw ArgumentError("Invalid parent ID");
     }
+
+    await _request(
+      () => http.delete(Uri.parse("$baseUrl/$id"), headers: headers),
+    );
+
+    return true;
   }
 }
