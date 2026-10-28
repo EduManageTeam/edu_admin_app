@@ -14,3 +14,4 @@ class ColorSystem {
   static final danger = Color(0xffB42318);
   static final info = Color(0xff175CD3);
 }
+
