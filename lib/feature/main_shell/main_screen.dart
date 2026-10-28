@@ -44,21 +44,21 @@ class _MainScreenState extends State<MainScreen> {
 }
 
 // Temporary page until a teammate's screen is ready
-class _ComingSoon extends StatelessWidget {
-  final String title;
+// class _ComingSoon extends StatelessWidget {
+//   final String title;
 
-  const _ComingSoon(this.title);
+//   const _ComingSoon(this.title);
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: ColorSystem.appBG,
-      body: Center(
-        child: Text(
-          '$title (coming soon)',
-          style: TextStyle(color: ColorSystem.muted),
-        ),
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       backgroundColor: ColorSystem.appBG,
+//       body: Center(
+//         child: Text(
+//           '$title (coming soon)',
+//           style: TextStyle(color: ColorSystem.muted),
+//         ),
+//       ),
+//     );
+//   }
+// }
