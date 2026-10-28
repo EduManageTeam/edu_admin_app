@@ -1,2 +1,2 @@
-export 'package:edu_admin/feature/profile_screen/model/student_model.dart';
+export 'package:edu_admin/feature/profile_screen/model/admin_model.dart';
 

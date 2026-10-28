@@ -1,7 +1,7 @@
 import 'package:edu_admin/feature/home_feature/view/splash_screen.dart';
 import 'package:edu_admin/feature/profile_screen/view/profile_screen.dart';
-import 'package:edu_admin/feature/profile_screen/view/student_screen.dart';
 import 'package:edu_admin/feature/school_screen/view/school_screen.dart';
+import 'package:edu_admin/feature/student_screen/view/student_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: ProfileScreen(),
+      home: StudentScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
