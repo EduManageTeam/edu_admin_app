@@ -1,11 +1,5 @@
-<<<<<<< HEAD:lib/feature/profile_screen/view/student_profile_screen.dart
-import 'package:edu_admin/model/color_system.dart';
-import 'package:edu_admin/feature/profile_screen/model/student_model.dart';
-=======
-
-import 'package:edu_admin/model/color_system.dart';
 import 'package:edu_admin/feature/student_screen/model/student_model.dart';
->>>>>>> feature-tola:lib/feature/student_screen/view/student_profile_screen.dart
+import 'package:edu_admin/model/color_system.dart';
 import 'package:flutter/material.dart';
 
 class StudentProfileScreen extends StatelessWidget {
