@@ -1,6 +1,7 @@
 import 'package:edu_admin/feature/profile_screen/view/profile_screen.dart';
 import 'package:edu_admin/feature/school_screen/view/school_screen.dart';
 import 'package:edu_admin/feature/student_screen/view/student_screen.dart';
+import 'package:edu_admin/feature/teacher_screen/view/teacher_screen.dart';
 import 'package:flutter/material.dart';
 
 import '../../model/color_system.dart';
@@ -24,7 +25,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _pages = const [
     DashboardScreen(), // Home
     StudentScreen(), // Students
-    _ComingSoon('People'), // TODO: teachers / parents
+    TeacherScreen(), // People
     SchoolScreen(),
     ProfileScreen(),
   ];

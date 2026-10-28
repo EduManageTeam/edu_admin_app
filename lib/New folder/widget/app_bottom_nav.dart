@@ -1,4 +1,4 @@
-import 'package:edu_admin/feature/model/color_system.dart';
+import 'package:edu_admin/model/color_system.dart';
 import 'package:flutter/material.dart';
 
 /// Shared bottom navigation bar (Home, Students, People, School, More).
@@ -29,7 +29,7 @@ class AppBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: ColorSystem().surface,
+        color: ColorSystem.surface,
         border: Border(top: BorderSide(color: ColorSystem.border)),
       ),
       child: SafeArea(
