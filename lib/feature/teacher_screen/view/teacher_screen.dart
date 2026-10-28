@@ -262,7 +262,7 @@ class TeacherScreen extends ConsumerWidget {
                         return teacherCard(
                           context,
                           teacher.name,
-                          teacher.phone ?? 'No phone number',
+                          teacher.phone,
                           teacher.status,
                         );
                       },
