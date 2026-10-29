@@ -3,7 +3,6 @@ import 'package:edu_admin/feature/school_screen/view/school_screen.dart';
 import 'package:edu_admin/feature/student_screen/view/student_screen.dart';
 import 'package:edu_admin/feature/teacher_screen/view/teacher_screen.dart';
 import 'package:flutter/material.dart';
-
 import '../../widget/app_bottom_nav.dart';
 import '../home_feature/view/dashboard_screen.dart';
 
