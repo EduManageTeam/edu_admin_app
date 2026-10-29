@@ -1,16 +1,21 @@
+import 'package:edu_admin/feature/teacher_screen/model/teacher_model.dart';
 import 'package:edu_admin/feature/teacher_screen/view/teacherprofile_screen.dart';
 import 'package:edu_admin/feature/teacher_screen/view/widgets/profile_widget.dart';
 import 'package:edu_admin/model/color_system.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-Widget teacherCard(
-  BuildContext context,
-  String name,
-  String phone,
-  String status,
-) {
-  bool isActive = status == "Active";
+Widget teacherCard(BuildContext context, TeacherModel teacher) {
+  final String name = teacher.name;
+  final String phone = teacher.phone;
+  final String teacherStatus = teacher.status.trim().toLowerCase();
+
+  final bool isActive = teacherStatus == 'active';
+
+  final String statusText = teacherStatus == 'active'
+      ? 'On Duty'
+      : teacherStatus == 'inactive'
+      ? 'On Leave'
+      : 'Unknown';
 
   return Card(
     color: ColorSystem.surface,
@@ -26,57 +31,67 @@ Widget teacherCard(
       // Avatar
       leading: ProfileAvatar(name: name, size: 46),
 
-      // Teacher Name
+      // Teacher name
       title: Text(
         name,
         style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
           color: ColorSystem.lnk,
         ),
       ),
 
-      // Subject and Actions
+      // Phone and actions
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(height: 5),
+          const SizedBox(height: 5),
           Text(
-            phone,
-            style: TextStyle(fontSize: 11, color: ColorSystem.muted),
+            phone.trim().isEmpty ? 'No phone number' : phone,
+            style: TextStyle(fontSize: 13, color: ColorSystem.muted),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
-            "Schedule • Assign • Edit",
+            'Schedule • Assign • Edit',
             style: TextStyle(fontSize: 11, color: ColorSystem.primary),
           ),
         ],
       ),
 
-      // Status
+      // Status badge
       trailing: Container(
         width: 76,
         padding: const EdgeInsets.symmetric(vertical: 9),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isActive ? const Color(0xFFECFDF3) : const Color(0xFFFFF7E6),
+          color: isActive
+              ? const Color(0xFFECFDF3)
+              : teacherStatus == 'inactive'
+              ? const Color(0xFFFFF7E6)
+              : const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(30),
         ),
         child: Text(
-          status,
+          statusText,
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: isActive ? ColorSystem.success : ColorSystem.warning,
+            color: isActive
+                ? ColorSystem.success
+                : teacherStatus == 'inactive'
+                ? ColorSystem.warning
+                : ColorSystem.muted,
           ),
         ),
       ),
 
-      // Navigate to Teacher Detail
+      // Navigate to teacher profile
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const TeacherProfileScreen()),
+          MaterialPageRoute(
+            builder: (context) => TeacherProfileScreen(teacher: teacher),
+          ),
         );
       },
     ),

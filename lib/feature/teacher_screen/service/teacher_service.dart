@@ -5,6 +5,7 @@ import 'package:edu_admin/feature/home_feature/config/api_config.dart';
 import 'package:edu_admin/feature/teacher_screen/model/teacher_model.dart';
 import 'package:edu_admin/feature/teacher_screen/model/teacher_response_model.dart';
 import 'package:edu_admin/feature/teacher_screen/service/exceptions/teacher_api_exception.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class TeacherService {
@@ -16,15 +17,17 @@ class TeacherService {
     }
   }
 
-  String get baseUrl => '${ApiConfig.baseUrl}/teachers';
+  // API URL
+  String get baseUrl => '${ApiConfig.baseUrl}${ApiConfig.apiPrefix}/teachers';
 
+  // Headers
   Map<String, String> get headers => {
     'Accept': 'application/json',
     'Content-Type': 'application/json',
     'Authorization': 'Bearer $token',
   };
 
-  // DECODE JSON
+  // Decode JSON
   Map<String, dynamic> _decodeJson(String body) {
     try {
       final decoded = jsonDecode(body);
@@ -32,16 +35,18 @@ class TeacherService {
       if (decoded is Map<String, dynamic>) {
         return decoded;
       }
-    } catch (_) {
-      // Handle
+    } catch (error) {
+      debugPrint('TEACHER API JSON ERROR: $error');
     }
 
     throw const TeacherApiException('Invalid response from server.');
   }
 
-  // check api reponse
+  // Check response
   void _checkResponse(http.Response response) {
     final status = response.statusCode;
+
+    debugPrint('TEACHER API HTTP: $status');
 
     if (status >= 200 && status < 300) {
       return;
@@ -61,11 +66,21 @@ class TeacherService {
         );
 
       case 404:
-        throw const TeacherApiException('Teacher not found.', statusCode: 404);
+        throw const TeacherApiException(
+          'Teacher endpoint not found or teacher does not exist.',
+          statusCode: 404,
+        );
 
       case 422:
-        final json = _decodeJson(response.body);
-        final rawErrors = json['errors'];
+        Map<String, dynamic> body;
+
+        try {
+          body = _decodeJson(response.body);
+        } on TeacherApiException {
+          body = {};
+        }
+
+        final rawErrors = body['errors'];
 
         throw TeacherApiException(
           'Please check the entered information.',
@@ -89,7 +104,7 @@ class TeacherService {
     }
   }
 
-  // send request
+  // Send request
   Future<http.Response> _request(
     Future<http.Response> Function() action,
   ) async {
@@ -110,79 +125,155 @@ class TeacherService {
     }
   }
 
-  // search, filter, statistic
+  // Calculate statistics
+  Map<String, dynamic> _calculateStats(List<dynamic> data) {
+    int onDuty = 0;
+    int onLeave = 0;
+
+    for (final item in data) {
+      if (item is! Map) continue;
+
+      final status = item['status']?.toString().trim().toLowerCase() ?? '';
+
+      if (status == 'active') {
+        onDuty++;
+      } else if (status == 'inactive') {
+        onLeave++;
+      }
+    }
+
+    return {'assigned': data.length, 'on_duty': onDuty, 'on_leave': onLeave};
+  }
+
+  // Get all teachers
   Future<TeacherResponse> getTeachers({
     String search = '',
     String status = 'all',
   }) async {
-    final searchText = search.trim();
+    final uri = Uri.parse(baseUrl);
 
-    // validate text
-    if (searchText.length > 100) {
-      throw ArgumentError('Search cannot exceed 100 characters');
-    }
+    debugPrint('TEACHER API: ${ApiConfig.useRender ? "Render" : "Local"}');
+    debugPrint('TEACHER API GET: $uri');
 
-    // validate filter
-    if (!['all', 'active', 'inactive'].contains(status)) {
-      throw ArgumentError('Invalid teacher status');
-    }
-
-    // query parameter
-    final query = <String, String>{};
-
-    if (searchText.isNotEmpty) {
-      query['search'] = searchText;
-    }
-
-    if (status != 'all') {
-      query['status'] = status;
-    }
-
-    final uri = Uri.parse(baseUrl)
-        .replace(queryParameters: query.isEmpty ? null : query);
-
-    // send api request
     final response = await _request(() => http.get(uri, headers: headers));
 
     final json = _decodeJson(response.body);
 
+    // Make sure data is a list
+    final rawData = json['data'];
+
+    if (rawData is! List) {
+      debugPrint('TEACHER API INVALID DATA: ${json.keys.toList()}');
+
+      throw const TeacherApiException('Server did not return a teacher list.');
+    }
+
+    // Calculate statistics
+    final calculatedStats = _calculateStats(rawData);
+
+    // Use local API stats when available
+    if (!ApiConfig.useRender && json['stats'] is Map) {
+      debugPrint('TEACHER API: Using local statistics');
+    } else {
+      json['stats'] = calculatedStats;
+
+      debugPrint('TEACHER API: Using calculated statistics');
+    }
+
+    debugPrint('TEACHER API: Loaded ${rawData.length} teachers');
+
     try {
       return TeacherResponse.fromJson(json);
-    } catch (_) {
+    } catch (error, stackTrace) {
+      debugPrint('TEACHER PARSING ERROR: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
       throw const TeacherApiException('Unable to read teacher information.');
     }
   }
 
-  // get all teachers
+  // Get teacher list
   Future<List<TeacherModel>> getAllTeacher() async {
     final response = await getTeachers();
+
     return response.teachers;
   }
 
-  // add
+  // Get teacher profile by ID
+  Future<TeacherDetailModel> getTeacherById(int id) async {
+    if (id <= 0) {
+      throw ArgumentError('Invalid teacher ID');
+    }
+
+    final uri = Uri.parse('$baseUrl/$id');
+
+    debugPrint('TEACHER PROFILE GET: $uri');
+
+    final response = await _request(() => http.get(uri, headers: headers));
+
+    final json = _decodeJson(response.body);
+
+    final rawData = json['data'];
+
+    if (rawData is! Map) {
+      throw const TeacherApiException(
+        'Server did not return teacher profile information.',
+      );
+    }
+
+    try {
+      final teacherDetail = TeacherDetailModel.fromJson(
+        Map<String, dynamic>.from(rawData),
+      );
+
+      debugPrint('TEACHER PROFILE: Loaded teacher ID $id');
+
+      return teacherDetail;
+    } catch (error, stackTrace) {
+      debugPrint('TEACHER PROFILE PARSING ERROR: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
+      throw const TeacherApiException(
+        'Unable to read teacher profile information.',
+      );
+    }
+  }
+
+  // Add teacher
   Future<TeacherModel> addTeacher(TeacherModel teacher) async {
     final response = await _request(
       () => http.post(
         Uri.parse(baseUrl),
         headers: headers,
-        body: jsonEncode(teacher.toJson()),
+        body: jsonEncode({
+          'name': teacher.name,
+          'gender': teacher.gender,
+          'phone': teacher.phone.trim().isEmpty ? null : teacher.phone.trim(),
+          'email': teacher.email,
+          'address': teacher.address.trim().isEmpty
+              ? null
+              : teacher.address.trim(),
+          'photo': teacher.photo,
+          'status': teacher.status,
+        }),
       ),
     );
 
     final json = _decodeJson(response.body);
 
     try {
-      return TeacherModel.fromJson(
-        Map<String, dynamic>.from(json['data'] ?? json),
-      );
-    } catch (_) {
+      return TeacherModel.fromJson(Map<String, dynamic>.from(json['data']));
+    } catch (error, stackTrace) {
+      debugPrint('ADD TEACHER PARSING ERROR: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
       throw const TeacherApiException(
         'Teacher may have been created, but the response is invalid.',
       );
     }
   }
 
-  // update
+  // Update teacher
   Future<TeacherModel> updateTeacher(
     int id,
     Map<String, dynamic> updateFields,
@@ -212,7 +303,45 @@ class TeacherService {
     }
   }
 
-  // delete
+  // Reset teacher password
+  Future<void> resetTeacherPassword({
+    required int teacherId,
+    required String password,
+    required String confirmPassword,
+  }) async {
+    if (teacherId <= 0) {
+      throw ArgumentError('Invalid teacher ID');
+    }
+
+    if (password.length < 8) {
+      throw const TeacherApiException(
+        'Password must be at least 8 characters.',
+      );
+    }
+
+    if (password != confirmPassword) {
+      throw const TeacherApiException('Passwords do not match.');
+    }
+
+    final uri = Uri.parse('$baseUrl/$teacherId/reset-password');
+
+    debugPrint('TEACHER PASSWORD RESET: Teacher ID $teacherId');
+
+    await _request(
+      () => http.patch(
+        uri,
+        headers: headers,
+        body: jsonEncode({
+          'password': password,
+          'password_confirmation': confirmPassword,
+        }),
+      ),
+    );
+
+    debugPrint('TEACHER PASSWORD RESET: Successfully updated');
+  }
+
+  // Delete teacher
   Future<bool> deleteTeacher(int id) async {
     if (id <= 0) {
       throw ArgumentError('Invalid teacher ID');
