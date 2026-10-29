@@ -20,7 +20,7 @@ class TeacherScreen extends ConsumerWidget {
     final search = ref.watch(teacherSearchProvider);
 
     return Scaffold(
-      backgroundColor: ColorSystem.light,
+
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
