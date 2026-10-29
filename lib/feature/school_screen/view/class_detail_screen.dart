@@ -1,6 +1,7 @@
 import 'package:edu_admin/feature/school_screen/model/class_item.dart';
 import 'package:edu_admin/feature/school_screen/model/info_item.dart';
 import 'package:edu_admin/feature/school_screen/view/attendance_overview_screen.dart';
+import 'package:edu_admin/feature/school_screen/view/scores_overview_screen.dart';
 import 'package:edu_admin/feature/school_screen/view/subjects_screen.dart';
 import 'package:edu_admin/feature/school_screen/widget/info_tile.dart';
 import 'package:edu_admin/feature/school_screen/widget/screen_header.dart';
@@ -83,6 +84,19 @@ class ClassDetailScreen extends StatelessWidget {
                   onTap: () => _open(
                     context,
                     const AttendanceOverviewScreen(showBack: true),
+                  ),
+                ),
+                // NEW: extra tile (not in the Figma design) so we can reach
+                // the Scores Overview screen. Delete this block if the team
+                // links Scores from somewhere else later.
+                InfoTile(
+                  item: const InfoItem(
+                    title: 'Scores',
+                    subtitle: 'Average 84.6',
+                  ),
+                  onTap: () => _open(
+                    context,
+                    const ScoresOverviewScreen(showBack: true),
                   ),
                 ),
               ],
