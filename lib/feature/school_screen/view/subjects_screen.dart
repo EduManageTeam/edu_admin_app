@@ -1,12 +1,16 @@
-import 'package:edu_admin/model/color_system.dart';
 import 'package:edu_admin/feature/school_screen/model/info_item.dart';
 import 'package:edu_admin/feature/school_screen/widget/info_tile.dart';
 import 'package:edu_admin/feature/school_screen/widget/screen_header.dart';
 import 'package:edu_admin/feature/school_screen/widget/search_field.dart';
+import 'package:edu_admin/model/color_system.dart';
 import 'package:flutter/material.dart';
 
 class SubjectsScreen extends StatelessWidget {
-  const SubjectsScreen({super.key});
+  // true = show a back arrow (when opened from another screen)
+  // false = show the red dot (when it is a main screen). Default is false.
+  final bool showBack;
+
+  const SubjectsScreen({super.key, this.showBack = false});
 
   static const List<InfoItem> _items = [
     InfoItem(title: 'Mathematics', subtitle: '4 classes · 2 teachers'),
@@ -23,9 +27,11 @@ class SubjectsScreen extends StatelessWidget {
       backgroundColor: ColorSystem.appBG,
       body: Column(
         children: [
-          const ScreenHeader(
+          // No "const" here, because showBack is a variable.
+          ScreenHeader(
             title: 'Subjects',
             subtitle: 'Subject catalog & assignments',
+            showBack: showBack,
           ),
           Expanded(
             child: ListView(
@@ -36,16 +42,17 @@ class SubjectsScreen extends StatelessWidget {
                   trailingIcon: Icons.menu,
                 ),
                 const SizedBox(height: 16),
+                // Align pushes the button to the right side
                 Align(
                   alignment: Alignment.centerRight,
                   child: SizedBox(
                     width: 106,
                     height: 42,
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {}, // empty for now (UI only)
                       style: ElevatedButton.styleFrom(
                         backgroundColor: ColorSystem.primary,
-                        foregroundColor: ColorSystem.surface,
+                        foregroundColor: ColorSystem.surface, // text color
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),

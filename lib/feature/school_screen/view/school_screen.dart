@@ -1,9 +1,11 @@
 import 'package:edu_admin/feature/school_screen/model/class_item.dart';
-import 'package:edu_admin/model/color_system.dart';
+import 'package:edu_admin/feature/school_screen/view/class_detail_screen.dart';
 import 'package:edu_admin/feature/school_screen/widget/class_card.dart';
 import 'package:edu_admin/feature/school_screen/widget/summary_card.dart';
+import 'package:edu_admin/model/color_system.dart';
 import 'package:flutter/material.dart';
 
+// StatefulWidget, because the screen changes when the user taps a tab.
 class SchoolScreen extends StatefulWidget {
   const SchoolScreen({super.key});
 
@@ -12,8 +14,10 @@ class SchoolScreen extends StatefulWidget {
 }
 
 class _SchoolScreenState extends State<SchoolScreen> {
+  // 0 = Classes tab, 1 = Subjects tab
   int _selectedTab = 0;
 
+  // Fake data for UI only. Later it will come from the backend / Riverpod.
   static const List<ClassItem> _classes = [
     ClassItem(
       name: 'Grade 1A',
@@ -52,16 +56,29 @@ class _SchoolScreenState extends State<SchoolScreen> {
     ),
   ];
 
+  // NAVIGATION: open the Class Detail screen for the tapped class.
+  // Navigator.push puts a new screen on top of this one.
+  // MaterialPageRoute = the normal slide animation of the platform.
+  void _openClassDetail(ClassItem item) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ClassDetailScreen(item: item)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ColorSystem.appBG,
+      // SafeArea keeps the content away from the notch and status bar.
       body: SafeArea(
+        // ListView scrolls when the content is taller than the screen.
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
           children: [
             _buildHeader(),
             const SizedBox(height: 20),
+            // const is valid here: all values are fixed numbers and text.
             const SummaryCard(
               term: 'Academic Term 2026-2027',
               roomsOpen: 2,
@@ -74,8 +91,12 @@ class _SchoolScreenState extends State<SchoolScreen> {
             const SizedBox(height: 16),
             _buildSearchBar(),
             const SizedBox(height: 16),
+            // "..." (spread) puts every card directly into the list.
             if (_selectedTab == 0)
-              ..._classes.map((item) => ClassCard(item: item))
+              ..._classes.map(
+                (item) =>
+                    ClassCard(item: item, onTap: () => _openClassDetail(item)),
+              )
             else
               _buildSubjectsPlaceholder(),
           ],
@@ -84,10 +105,12 @@ class _SchoolScreenState extends State<SchoolScreen> {
     );
   }
 
+  // Header: label, title, subtitle on the left, avatar on the right
   Widget _buildHeader() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Expanded takes the remaining width, so the avatar stays at the right.
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -106,7 +129,7 @@ class _SchoolScreenState extends State<SchoolScreen> {
                 'Classes & Curriculum',
                 style: TextStyle(
                   color: ColorSystem.lnk,
-                  fontSize: 24,
+                  fontSize: 24, // Page title / 24 Bold
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -135,6 +158,7 @@ class _SchoolScreenState extends State<SchoolScreen> {
     );
   }
 
+  // Tabs: Classes | Subjects
   Widget _buildTabs() {
     return Container(
       padding: const EdgeInsets.all(4),
@@ -151,16 +175,19 @@ class _SchoolScreenState extends State<SchoolScreen> {
     );
   }
 
+  // One tab button, written once and used twice (no copy-paste).
   Widget _buildTabButton(String label, int index) {
     final bool isSelected = _selectedTab == index;
 
     return Expanded(
       child: GestureDetector(
+        // setState tells Flutter: "something changed, redraw the screen".
         onTap: () => setState(() => _selectedTab = index),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           alignment: Alignment.center,
           decoration: BoxDecoration(
+            // Selected tab = dark ink background + white text
             color: isSelected ? ColorSystem.lnk : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
           ),
@@ -177,6 +204,7 @@ class _SchoolScreenState extends State<SchoolScreen> {
     );
   }
 
+  // Search bar (UI only, it does not filter yet)
   Widget _buildSearchBar() {
     return TextField(
       decoration: InputDecoration(
@@ -187,10 +215,12 @@ class _SchoolScreenState extends State<SchoolScreen> {
         filled: true,
         fillColor: ColorSystem.surface,
         contentPadding: const EdgeInsets.symmetric(vertical: 14),
+        // Border when NOT focused
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: ColorSystem.border),
         ),
+        // Border when the user taps inside (brand red)
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: ColorSystem.primary),
@@ -199,6 +229,7 @@ class _SchoolScreenState extends State<SchoolScreen> {
     );
   }
 
+  // Temporary content for the Subjects tab
   Widget _buildSubjectsPlaceholder() {
     return Padding(
       padding: const EdgeInsets.only(top: 40),
