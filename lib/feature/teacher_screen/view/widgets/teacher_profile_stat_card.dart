@@ -1,7 +1,6 @@
 import 'package:edu_admin/feature/teacher_screen/view/widgets/profilecard_widget.dart';
 import 'package:edu_admin/model/color_system.dart';
 import 'package:edu_admin/feature/teacher_screen/view/widgets/teacher_profile_icon_box.dart';
-import 'package:edu_admin/feature/teacher_screen/view/widgets/profile_widget.dart';
 import 'package:flutter/material.dart';
 
 class TeacherProfileStatCard extends StatelessWidget {
