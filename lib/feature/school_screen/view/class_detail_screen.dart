@@ -1,32 +1,27 @@
 import 'package:edu_admin/feature/school_screen/model/class_item.dart';
-import 'package:edu_admin/model/color_system.dart';
 import 'package:edu_admin/feature/school_screen/model/info_item.dart';
+import 'package:edu_admin/feature/school_screen/view/attendance_overview_screen.dart';
+import 'package:edu_admin/feature/school_screen/view/subjects_screen.dart';
 import 'package:edu_admin/feature/school_screen/widget/info_tile.dart';
 import 'package:edu_admin/feature/school_screen/widget/screen_header.dart';
 import 'package:edu_admin/feature/school_screen/widget/status_chip.dart';
+import 'package:edu_admin/model/color_system.dart';
 import 'package:flutter/material.dart';
 
+// This screen receives the class it should show.
+// The School screen passes the tapped ClassItem here.
 class ClassDetailScreen extends StatelessWidget {
   final ClassItem item;
 
   const ClassDetailScreen({super.key, required this.item});
 
+  // NAVIGATION helper: open any screen on top of this one.
+  void _open(BuildContext context, Widget screen) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
+  }
+
   @override
   Widget build(BuildContext context) {
-    final List<InfoItem> setupItems = [
-      InfoItem(
-        title: 'Student roster',
-        subtitle: '${item.students} enrolled students',
-      ),
-      const InfoItem(title: 'Subjects', subtitle: '6 active subjects'),
-      const InfoItem(
-        title: 'Teacher assignments',
-        subtitle: '4 assigned teachers',
-      ),
-      const InfoItem(title: 'Schedule', subtitle: 'Mon–Fri · 8:00–2:00'),
-      const InfoItem(title: 'Attendance', subtitle: 'Today 96% present'),
-    ];
-
     return Scaffold(
       backgroundColor: ColorSystem.appBG,
       body: Column(
@@ -51,7 +46,45 @@ class ClassDetailScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                ...setupItems.map((setup) => InfoTile(item: setup)),
+                // No onTap = tapping does nothing (no screen designed yet)
+                InfoTile(
+                  item: InfoItem(
+                    title: 'Student roster',
+                    subtitle: '${item.students} enrolled students',
+                  ),
+                ),
+                // Opens the Subjects screen, with a back arrow
+                InfoTile(
+                  item: const InfoItem(
+                    title: 'Subjects',
+                    subtitle: '6 active subjects',
+                  ),
+                  onTap: () =>
+                      _open(context, const SubjectsScreen(showBack: true)),
+                ),
+                const InfoTile(
+                  item: InfoItem(
+                    title: 'Teacher assignments',
+                    subtitle: '4 assigned teachers',
+                  ),
+                ),
+                const InfoTile(
+                  item: InfoItem(
+                    title: 'Schedule',
+                    subtitle: 'Mon–Fri · 8:00–2:00',
+                  ),
+                ),
+                // Opens the Attendance Overview screen, with a back arrow
+                InfoTile(
+                  item: const InfoItem(
+                    title: 'Attendance',
+                    subtitle: 'Today 96% present',
+                  ),
+                  onTap: () => _open(
+                    context,
+                    const AttendanceOverviewScreen(showBack: true),
+                  ),
+                ),
               ],
             ),
           ),

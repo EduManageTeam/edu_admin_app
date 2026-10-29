@@ -1,12 +1,15 @@
-import 'package:edu_admin/model/color_system.dart';
 import 'package:edu_admin/feature/school_screen/model/info_item.dart';
 import 'package:edu_admin/feature/school_screen/widget/info_tile.dart';
 import 'package:edu_admin/feature/school_screen/widget/metric_card.dart';
 import 'package:edu_admin/feature/school_screen/widget/screen_header.dart';
+import 'package:edu_admin/model/color_system.dart';
 import 'package:flutter/material.dart';
 
 class ScoresOverviewScreen extends StatelessWidget {
-  const ScoresOverviewScreen({super.key});
+  // true = show a back arrow (when opened from another screen)
+  final bool showBack;
+
+  const ScoresOverviewScreen({super.key, this.showBack = false});
 
   static const List<InfoItem> _items = [
     InfoItem(title: 'Mathematics', subtitle: '87 average'),
@@ -22,9 +25,10 @@ class ScoresOverviewScreen extends StatelessWidget {
       backgroundColor: ColorSystem.appBG,
       body: Column(
         children: [
-          const ScreenHeader(
+          ScreenHeader(
             title: 'Scores Overview',
             subtitle: 'School-wide operational view',
+            showBack: showBack,
           ),
           Expanded(
             child: ListView(
