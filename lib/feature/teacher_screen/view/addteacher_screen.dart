@@ -35,7 +35,7 @@ class AddTeacherScreen extends ConsumerWidget {
 
       Navigator.pop(context, true);
     } catch (error, stackTrace) {
-      debugPrint('ADD TEACHER ERROR: $error');
+      debugPrint('Add Techer Error: $error');
       debugPrintStack(stackTrace: stackTrace);
 
       if (!context.mounted) return;
@@ -193,7 +193,7 @@ class AddTeacherScreen extends ConsumerWidget {
 
                       SizedBox(height: 12),
 
-                      // Address - multiline
+                      // Address
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

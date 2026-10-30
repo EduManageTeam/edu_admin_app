@@ -20,7 +20,7 @@ class TeacherProfileClassRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 9),
       child: Row(
         children: [
-          const TeacherProfileIconBox(icon: Icons.menu_book_rounded),
+          const ProfileIconBox(icon: Icons.menu_book_rounded),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

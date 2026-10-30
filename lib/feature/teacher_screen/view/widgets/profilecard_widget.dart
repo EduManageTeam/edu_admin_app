@@ -22,7 +22,7 @@ class InfoRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
         children: [
-          TeacherProfileIconBox(icon: icon),
+          ProfileIconBox(icon: icon),
           SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -30,14 +30,14 @@ class InfoRow extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(color: ColorSystem.muted, fontSize: 11),
+                  style: TextStyle(color: ColorSystem.muted, fontSize: 13),
                 ),
                 SizedBox(height: 3),
                 Text(
                   value,
                   style: TextStyle(
                     color: ColorSystem.lnk,
-                    fontSize: 13,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
                   ),
                   softWrap: true,

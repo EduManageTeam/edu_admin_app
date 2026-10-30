@@ -22,7 +22,7 @@ class TeacherProfileStatCard extends StatelessWidget {
       decoration: cardDecoration(),
       child: Row(
         children: [
-          TeacherProfileIconBox(icon: icon, size: 38, iconSize: 19),
+          ProfileIconBox(icon: icon, size: 38, iconSize: 19),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -32,15 +32,15 @@ class TeacherProfileStatCard extends StatelessWidget {
                 Text(
                   value,
                   style: TextStyle(
-                    fontSize: 21,
+                    fontSize: 20,
                     fontWeight: FontWeight.w800,
                     color: ColorSystem.lnk,
                   ),
                 ),
-                const SizedBox(height: 3),
+                SizedBox(height: 3),
                 Text(
                   title,
-                  style: TextStyle(fontSize: 11, color: ColorSystem.muted),
+                  style: TextStyle(fontSize: 15, color: ColorSystem.muted),
                 ),
               ],
             ),

@@ -7,7 +7,6 @@ import 'package:edu_admin/feature/teacher_screen/view/widgets/edit_teacher_class
 import 'package:edu_admin/model/color_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 class EditTeacherScreen extends ConsumerStatefulWidget {
   final TeacherModel teacher;
   final String? loginId;
@@ -79,142 +78,10 @@ class _EditTeacherScreenState extends ConsumerState<EditTeacherScreen> {
     super.dispose();
   }
 
-  // Validate password
-  bool _validatePassword() {
-    final password = _passwordController.text;
-    final confirmPassword = _confirmPasswordController.text;
-
-    if (password.isEmpty && confirmPassword.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a new password')),
-      );
-      return false;
-    }
-
-    if (password.length < 8) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password must be at least 8 characters')),
-      );
-      return false;
-    }
-
-    if (password != confirmPassword) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
-      return false;
-    }
-
-    return true;
-  }
-
-  // Reset teacher password
-  Future<void> _resetPassword() async {
-    if (_isSaving || _isResetting) return;
-
-    if (!_validatePassword()) return;
-
-    setState(() {
-      _isResetting = true;
-    });
-
-    try {
-      await ref
-          .read(teacherProvider.notifier)
-          .resetTeacherPassword(
-            teacherId: widget.teacher.id,
-            password: _passwordController.text,
-            confirmPassword: _confirmPasswordController.text,
-          );
-
-      if (!mounted) return;
-
-      // Clear password only after success
-      _passwordController.clear();
-      _confirmPasswordController.clear();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Teacher password reset successfully'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    } catch (error) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Unable to reset password: $error'),
-          backgroundColor: ColorSystem.danger,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isResetting = false;
-        });
-      }
-    }
-  }
-
-  // Save teacher personal information
-  Future<void> _saveTeacher() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (_isSaving || _isResetting) return;
-
-    setState(() => _isSaving = true);
-
-    final updatedTeacher = TeacherModel(
-      id: widget.teacher.id,
-      name: _nameController.text.trim(),
-      gender: _gender,
-      phone: _phoneController.text.trim(),
-      email: _emailController.text.trim().isEmpty
-          ? null
-          : _emailController.text.trim(),
-      address: _addressController.text.trim(),
-      photo: widget.teacher.photo,
-      status: _status,
-    );
-
-    try {
-      await ref
-          .read(teacherProvider.notifier)
-          .updateTeacher(widget.teacher.id, updatedTeacher);
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Teacher updated successfully'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-
-      Navigator.pop(context, true);
-    } catch (error) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Unable to update teacher: $error'),
-          backgroundColor: ColorSystem.danger,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isSaving = false);
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ColorSystem.appBG,
-
       // App bar
       appBar: AppBar(
         backgroundColor: ColorSystem.appBG,
@@ -354,5 +221,136 @@ class _EditTeacherScreenState extends ConsumerState<EditTeacherScreen> {
         ),
       ),
     );
+  }
+
+  // Validate password
+  bool _validatePassword() {
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    if (password.isEmpty && confirmPassword.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a new password')),
+      );
+      return false;
+    }
+
+    if (password.length < 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password must be at least 8 characters')),
+      );
+      return false;
+    }
+
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
+      return false;
+    }
+
+    return true;
+  }
+
+  // Reset teacher password
+  Future<void> _resetPassword() async {
+    if (_isSaving || _isResetting) return;
+
+    if (!_validatePassword()) return;
+
+    setState(() {
+      _isResetting = true;
+    });
+
+    try {
+      await ref
+          .read(teacherProvider.notifier)
+          .resetTeacherPassword(
+            teacherId: widget.teacher.id,
+            password: _passwordController.text,
+            confirmPassword: _confirmPasswordController.text,
+          );
+
+      if (!mounted) return;
+
+      // Clear password only after success
+      _passwordController.clear();
+      _confirmPasswordController.clear();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Teacher password reset successfully'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Unable to reset password: $error'),
+          backgroundColor: ColorSystem.danger,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isResetting = false;
+        });
+      }
+    }
+  }
+
+  // Save teacher personal information
+  Future<void> _saveTeacher() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_isSaving || _isResetting) return;
+
+    setState(() => _isSaving = true);
+
+    final updatedTeacher = TeacherModel(
+      id: widget.teacher.id,
+      name: _nameController.text.trim(),
+      gender: _gender,
+      phone: _phoneController.text.trim(),
+      email: _emailController.text.trim().isEmpty
+          ? null
+          : _emailController.text.trim(),
+      address: _addressController.text.trim(),
+      photo: widget.teacher.photo,
+      status: _status,
+    );
+
+    try {
+      await ref
+          .read(teacherProvider.notifier)
+          .updateTeacher(widget.teacher.id, updatedTeacher);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Teacher updated successfully'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+
+      Navigator.pop(context, true);
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Unable to update teacher: $error'),
+          backgroundColor: ColorSystem.danger,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
   }
 }

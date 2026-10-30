@@ -12,44 +12,80 @@ Widget buildTextField({
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
+      // Field label
       Text(
         label,
         style: TextStyle(
           fontSize: 12,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
           color: ColorSystem.lnk,
         ),
       ),
-      SizedBox(height: 6),
-      Container(
-        decoration: BoxDecoration(
-          color: ColorSystem.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: ColorSystem.border),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 14,
-              spreadRadius: 1,
-              offset: const Offset(0, 5),
-            ),
-          ],
+       SizedBox(height: 7),
+      // Text input
+      TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        readOnly: readOnly,
+        validator: validator,
+        cursorColor: ColorSystem.primary,
+        cursorWidth: 2,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: ColorSystem.lnk,
         ),
-        child: TextFormField(
-          controller: controller,
-          keyboardType: keyboardType,
-          readOnly: readOnly,
-          validator: validator,
-          style: TextStyle(fontSize: 13, color: ColorSystem.lnk),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(color: ColorSystem.muted, fontSize: 13),
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 12,
-            ),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(
+            color: ColorSystem.muted,
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
           ),
+
+          filled: true,
+          fillColor: ColorSystem.surface,
+
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 15,
+            vertical: 15,
+          ),
+
+          // Normal border
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: ColorSystem.border, width: 1),
+          ),
+
+          // Pink border when clicked
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: ColorSystem.primary, width: 2),
+          ),
+
+          // Read-only border
+          disabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: ColorSystem.border),
+          ),
+
+          // Error border
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: ColorSystem.danger, width: 1.2),
+          ),
+
+          // Focused error border
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: ColorSystem.danger, width: 2),
+          ),
+
+          errorStyle: TextStyle(color: ColorSystem.danger, fontSize: 11),
+
+          // Focus color
+          focusColor: ColorSystem.primary,
+          hoverColor: ColorSystem.primary.withValues(alpha: 0.04),
         ),
       ),
     ],

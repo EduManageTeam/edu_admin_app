@@ -1,5 +1,4 @@
 import 'package:edu_admin/feature/home_feature/view/splash_screen.dart';
-import 'package:edu_admin/feature/teacher_screen/view/teacher_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

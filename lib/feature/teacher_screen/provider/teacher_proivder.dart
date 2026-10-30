@@ -23,27 +23,54 @@ final teacherServiceProvider = FutureProvider<TeacherService>((ref) async {
   return TeacherService(token: token);
 });
 
+// Cache all teacher information
+final allTeacherDetailsProvider = FutureProvider<List<TeacherDetailModel>>((
+  ref,
+) async {
+  final teacherService = await ref.watch(teacherServiceProvider.future);
+
+  return teacherService.getAllTeacherDetails();
+});
+
 // Search teachers
 final teacherSearchProvider = StateProvider<String>((ref) => '');
 
 // Filter teachers
 final teacherStatusProvider = StateProvider<String>((ref) => 'all');
 
-// Get all teachers
+// Get teacher list from shared cache
 final teacherAllProvider = FutureProvider<TeacherResponse>((ref) async {
-  final teacherService = await ref.watch(teacherServiceProvider.future);
+  final details = await ref.watch(allTeacherDetailsProvider.future);
 
-  return teacherService.getTeachers();
+  final teachers = details.map((e) => e.teacher).toList();
+
+  final stats = TeacherStats(
+    assigned: teachers.length,
+    onDuty: teachers
+        .where((teacher) => teacher.status.toLowerCase() == 'active')
+        .length,
+    onLeave: teachers
+        .where((teacher) => teacher.status.toLowerCase() == 'inactive')
+        .length,
+  );
+
+  return TeacherResponse(teachers: teachers, stats: stats);
 });
 
-// Get teacher profile by ID
+// Get teacher profile from cached list
 final teacherDetailProvider = FutureProvider.family<TeacherDetailModel, int>((
   ref,
   teacherId,
 ) async {
-  final teacherService = await ref.watch(teacherServiceProvider.future);
+  final teachers = await ref.watch(allTeacherDetailsProvider.future);
 
-  return teacherService.getTeacherById(teacherId);
+  for (final detail in teachers) {
+    if (detail.teacher.id == teacherId) {
+      return detail;
+    }
+  }
+
+  throw StateError('Teacher not found: $teacherId');
 });
 
 // Teacher notifier
@@ -89,10 +116,9 @@ class TeacherNotifier extends AsyncNotifier<TeacherResponse> {
 
   // Refresh teacher list
   Future<void> loading() async {
-    ref.invalidate(teacherAllProvider);
-    ref.invalidateSelf();
+    ref.invalidate(allTeacherDetailsProvider);
 
-    await future;
+    await ref.read(allTeacherDetailsProvider.future);
   }
 
   // Add teacher
@@ -101,7 +127,7 @@ class TeacherNotifier extends AsyncNotifier<TeacherResponse> {
 
     await teacherService.addTeacher(teacher);
 
-    ref.invalidate(teacherAllProvider);
+    ref.invalidate(allTeacherDetailsProvider);
   }
 
   // Update teacher
@@ -117,8 +143,7 @@ class TeacherNotifier extends AsyncNotifier<TeacherResponse> {
       'status': teacher.status,
     });
 
-    ref.invalidate(teacherAllProvider);
-    ref.invalidate(teacherDetailProvider(id));
+    ref.invalidate(allTeacherDetailsProvider);
   }
 
   // Delete teacher
@@ -127,8 +152,7 @@ class TeacherNotifier extends AsyncNotifier<TeacherResponse> {
 
     await teacherService.deleteTeacher(id);
 
-    ref.invalidate(teacherAllProvider);
-    ref.invalidate(teacherDetailProvider(id));
+    ref.invalidate(allTeacherDetailsProvider);
   }
 
   // Reset teacher password
@@ -144,8 +168,6 @@ class TeacherNotifier extends AsyncNotifier<TeacherResponse> {
       password: password,
       confirmPassword: confirmPassword,
     );
-
-    ref.invalidate(teacherDetailProvider(teacherId));
   }
 }
 

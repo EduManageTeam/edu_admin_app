@@ -57,7 +57,7 @@ class _EditTeacherLoginInfoState extends State<EditTeacherLoginInfo> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const TeacherProfileSectionTitle(
+          const ProfileSectionTitle(
             title: 'Login Information',
             icon: Icons.shield_outlined,
             trailing: 'Admin Only',
@@ -74,7 +74,7 @@ class _EditTeacherLoginInfoState extends State<EditTeacherLoginInfo> {
             ),
             child: Row(
               children: [
-                const TeacherProfileIconBox(icon: Icons.badge_outlined),
+                const ProfileIconBox(icon: Icons.badge_outlined),
                 SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -145,7 +145,7 @@ class _EditTeacherLoginInfoState extends State<EditTeacherLoginInfo> {
           // New password
           Row(
             children: [
-              const TeacherProfileIconBox(icon: Icons.lock_outline_rounded),
+              const ProfileIconBox(icon: Icons.lock_outline_rounded),
               SizedBox(width: 10),
               Expanded(
                 child: Text(

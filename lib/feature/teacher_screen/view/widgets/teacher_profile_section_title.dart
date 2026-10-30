@@ -2,12 +2,12 @@ import 'package:edu_admin/feature/teacher_screen/view/widgets/teacher_profile_ic
 import 'package:edu_admin/model/color_system.dart';
 import 'package:flutter/material.dart';
 
-class TeacherProfileSectionTitle extends StatelessWidget {
+class ProfileSectionTitle extends StatelessWidget {
   final String title;
   final IconData icon;
   final String? trailing;
 
-  const TeacherProfileSectionTitle({
+  const ProfileSectionTitle({
     super.key,
     required this.title,
     required this.icon,
@@ -18,14 +18,14 @@ class TeacherProfileSectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        TeacherProfileIconBox(icon: icon),
+        ProfileIconBox(icon: icon),
         const SizedBox(width: 9),
         Expanded(
           child: Text(
             title,
             style: TextStyle(
               color: ColorSystem.lnk,
-              fontSize: 14,
+              fontSize: 15,
               fontWeight: FontWeight.w800,
             ),
           ),

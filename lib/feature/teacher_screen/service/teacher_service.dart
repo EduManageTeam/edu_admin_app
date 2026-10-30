@@ -192,6 +192,29 @@ class TeacherService {
     }
   }
 
+  // get all teacher details info in on API request
+  Future<List<TeacherDetailModel>> getAllTeacherDetails() async {
+    final response = await _request(
+      () => http.get(Uri.parse(baseUrl), headers: headers),
+    );
+
+    final json = _decodeJson(response.body);
+
+    // Laravel returns teachers inside "data"
+    final data = json['data'];
+
+    if (data is! List) {
+      throw const TeacherApiException('Invalid teacher list response');
+    }
+
+    // Convert all teachers into full detail models
+    return data.map((item) {
+      return TeacherDetailModel.fromJson(
+        Map<String, dynamic>.from(item as Map),
+      );
+    }).toList();
+  }
+
   // Get teacher list
   Future<List<TeacherModel>> getAllTeacher() async {
     final response = await getTeachers();
@@ -240,6 +263,8 @@ class TeacherService {
   }
 
   // Add teacher
+
+  // Add teacher
   Future<TeacherModel> addTeacher(TeacherModel teacher) async {
     final response = await _request(
       () => http.post(
@@ -259,17 +284,27 @@ class TeacherService {
       ),
     );
 
-    final json = _decodeJson(response.body);
+    // Debug Laravel response
+    debugPrint('ADD TEACHER STATUS: ${response.statusCode}');
+    debugPrint('ADD TEACHER BODY: ${response.body}');
+
+    final decoded = _decodeJson(response.body);
+
+    final teacherData = decoded['data'];
+
+    if (teacherData is! Map) {
+      throw TeacherApiException(
+        'Teacher API returned an unexpected response: ${response.body}',
+      );
+    }
 
     try {
-      return TeacherModel.fromJson(Map<String, dynamic>.from(json['data']));
+      return TeacherModel.fromJson(Map<String, dynamic>.from(teacherData));
     } catch (error, stackTrace) {
-      debugPrint('ADD TEACHER PARSING ERROR: $error');
+      debugPrint('TEACHER MODEL ERROR: $error');
       debugPrintStack(stackTrace: stackTrace);
 
-      throw const TeacherApiException(
-        'Teacher may have been created, but the response is invalid.',
-      );
+      rethrow;
     }
   }
 

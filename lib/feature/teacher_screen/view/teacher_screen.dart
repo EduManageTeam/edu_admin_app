@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:edu_admin/feature/teacher_screen/provider/teacher_proivder.dart';
 import 'package:edu_admin/feature/teacher_screen/view/widgets/teacher_card.dart';
 import 'package:edu_admin/feature/teacher_screen/view/addteacher_screen.dart';
@@ -20,7 +22,7 @@ class TeacherScreen extends ConsumerWidget {
     final search = ref.watch(teacherSearchProvider);
 
     return Scaffold(
-
+      backgroundColor: ColorSystem.appBG,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -35,7 +37,8 @@ class TeacherScreen extends ConsumerWidget {
                     style: TextStyle(
                       color: ColorSystem.primary,
                       fontSize: 14,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.4,
                     ),
                   ),
                   Spacer(),

@@ -1,12 +1,12 @@
 import 'package:edu_admin/model/color_system.dart';
 import 'package:flutter/material.dart';
 
-class TeacherProfileIconBox extends StatelessWidget {
+class ProfileIconBox extends StatelessWidget {
   final IconData icon;
   final double size;
   final double iconSize;
 
-  const TeacherProfileIconBox({
+  const ProfileIconBox({
     super.key,
     required this.icon,
     this.size = 38,
