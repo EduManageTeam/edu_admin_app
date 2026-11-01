@@ -5,6 +5,7 @@ import 'package:edu_admin/feature/teacher_screen/view/widgets/teacher_card.dart'
 import 'package:edu_admin/feature/teacher_screen/view/addteacher_screen.dart';
 import 'package:edu_admin/feature/teacher_screen/view/widgets/teacher_filter_widget.dart';
 import 'package:edu_admin/model/color_system.dart';
+import 'package:edu_admin/widget/gradient_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -399,70 +400,15 @@ class TeacherScreen extends ConsumerWidget {
       ),
 
       // Add teacher
-      floatingActionButton: Container(
-        height: 54,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [ColorSystem.primary, const Color(0xFFD45468)],
-          ),
-          borderRadius: BorderRadius.circular(30),
-          boxShadow: [
-            BoxShadow(
-              color: ColorSystem.primary.withValues(alpha: 0.28),
-              blurRadius: 18,
-              offset: const Offset(0, 7),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(30),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(30),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const AddTeacherScreen(),
-                ),
-              );
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.20),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.person_add_alt_1_rounded,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                  ),
-                  SizedBox(width: 10),
-                  Text(
-                    'Add Teacher',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                  SizedBox(width: 2),
-                ],
-              ),
-            ),
-          ),
-        ),
+      floatingActionButton: GradientActionButton(
+        title: 'Add Teacher',
+        icon: Icons.person_add_alt_1_rounded,
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddTeacherScreen()),
+          );
+        },
       ),
 
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,

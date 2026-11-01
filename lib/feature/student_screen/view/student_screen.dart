@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:edu_admin/feature/student_screen/view/add_student_screen.dart';
 import 'package:edu_admin/feature/student_screen/view/student_profile_screen.dart';
+import 'package:edu_admin/widget/gradient_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:edu_admin/model/color_system.dart';
 import 'package:edu_admin/feature/student_screen/model/student_model.dart';
@@ -57,14 +60,15 @@ class _StudentScreenState extends State<StudentScreen> {
   }
 
   List<StudentModel> filterStudents(int? classId) {
+    final query = searchText.trim().toLowerCase();
+
     return students.where((student) {
       final matchesClass = classId == null || student.classId == classId;
-
-      final query = searchText.toLowerCase().trim();
 
       final matchesSearch =
           student.name.toLowerCase().contains(query) ||
           student.id.toString().contains(query) ||
+          (student.phone).toLowerCase().contains(query) ||
           (student.classId?.toString() ?? '').contains(query) ||
           (student.parentId?.toString() ?? '').contains(query);
 
@@ -188,85 +192,68 @@ class _StudentScreenState extends State<StudentScreen> {
                   child: isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : errorMessage != null
-                          ? Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.error_outline, size: 48, color: Colors.red.shade400),
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      errorMessage!,
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(fontSize: 14),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    ElevatedButton.icon(
-                                      onPressed: _fetchStudents,
-                                      icon: const Icon(Icons.refresh),
-                                      label: const Text('Retry'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: ColorSystem.dark,
-                                        foregroundColor: Colors.white,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )
-                          : TabBarView(
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                _buildStudentList(filterStudents(null)),
-                                _buildStudentList(filterStudents(1)),
-                                _buildStudentList(filterStudents(2)),
-                                _buildStudentList(filterStudents(3)),
-                                _buildStudentList(filterStudents(4)),
-                                _buildStudentList(filterStudents(5)),
+                                Icon(
+                                  Icons.error_outline,
+                                  size: 48,
+                                  color: Colors.red.shade400,
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  errorMessage!,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                                const SizedBox(height: 16),
+                                ElevatedButton.icon(
+                                  onPressed: _fetchStudents,
+                                  icon: const Icon(Icons.refresh),
+                                  label: const Text('Retry'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: ColorSystem.dark,
+                                    foregroundColor: Colors.white,
+                                  ),
+                                ),
                               ],
                             ),
+                          ),
+                        )
+                      : TabBarView(
+                          children: [
+                            _buildStudentList(filterStudents(null)),
+                            _buildStudentList(filterStudents(1)),
+                            _buildStudentList(filterStudents(2)),
+                            _buildStudentList(filterStudents(3)),
+                            _buildStudentList(filterStudents(4)),
+                            _buildStudentList(filterStudents(5)),
+                          ],
+                        ),
                 ),
               ],
             ),
           ),
         ),
 
-        floatingActionButton: FloatingActionButton.extended(
+        floatingActionButton: GradientActionButton(
+          title: 'Add Student',
+          icon: Icons.person_add_alt_1_rounded,
           onPressed: () async {
             final result = await Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const AddStudentScreen()),
+              MaterialPageRoute(builder: (context) => const AddStudentScreen()),
             );
+
             if (result == true && mounted) {
               _fetchStudents();
             }
           },
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          label: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [ColorSystem.dark, ColorSystem.dark.withOpacity(0.6)],
-              ),
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.add, color: Colors.white),
-                SizedBox(width: 8),
-                Text(
-                  'Add Student',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
         ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       ),
     );
   }
@@ -288,195 +275,193 @@ class _StudentScreenState extends State<StudentScreen> {
       );
     }
 
-    return ListView.separated(
-      padding: const EdgeInsets.only(top: 8, bottom: 90),
-      itemCount: data.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 8),
-      itemBuilder: (context, index) {
-        final student = data[index];
-        final isActive = student.status.toLowerCase() == 'active';
+    return RefreshIndicator(
+      onRefresh: _fetchStudents,
+      child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.only(top: 8, bottom: 90),
+        itemCount: data.length,
+        separatorBuilder: (context, index) => const SizedBox(height: 8),
+        itemBuilder: (context, index) {
+          final student = data[index];
 
-                        return InkWell(
-                          borderRadius: BorderRadius.circular(18),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => StudentProfileScreen(student: student),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(color: Colors.grey.shade200),
-                            ),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 27,
-                                  backgroundColor: ColorSystem.light,
-                                  child: Text(
-                                    student.name.isEmpty ? '?' : student.name[0].toUpperCase(),
-                                    style: TextStyle(
-                                      color: ColorSystem.dark,
-                                      fontSize: 21,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
+          return InkWell(
+            borderRadius: BorderRadius.circular(18),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => StudentProfileScreen(student: student),
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 27,
+                    backgroundColor: ColorSystem.light,
+                    backgroundImage: studentAvatarImage(student),
+                    child: student.photo == null || student.photo!.isEmpty
+                        ? Icon(
+                            Icons.person_rounded,
+                            size: 30,
+                            color: ColorSystem.primary,
+                          )
+                        : null,
+                  ),
 
-                                const SizedBox(width: 12),
+                  const SizedBox(width: 12),
 
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        student.name,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 5),
-                                      Text(
-                                        'Student ID: ${student.id} | '
-                                        'Class ID: ${student.classId ?? '-'}',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey.shade600,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 7),
-                                      Text(
-                                        student.phone,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey.shade700,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          student.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          'Student ID: ${student.id} | '
+                          'Class ID: ${student.classId ?? '-'}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        const SizedBox(height: 7),
+                        Text(
+                          student.phone,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
 
-                                const SizedBox(width: 8),
+                  const SizedBox(width: 8),
 
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 9,
-                                        vertical: 5,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: isActive
-                                            ? const Color(0xFFE6F7ED)
-                                            : const Color(0xFFFFE9E9),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: Text(
-                                        student.status.toUpperCase(),
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                          color: isActive
-                                              ? const Color(0xFF16834A)
-                                              : Colors.red.shade700,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    PopupMenuButton<String>(
-                                      padding: EdgeInsets.zero,
-                                      icon: Icon(
-                                        Icons.more_vert,
-                                        size: 18,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                      onSelected: (value) async {
-                                        if (value == 'update') {
-                                          final result = await Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) => AddStudentScreen(
-                                                studentToEdit: student,
-                                              ),
-                                            ),
-                                          );
-                                          if (result == true && mounted) {
-                                            _fetchStudents();
-                                          }
-                                        } else if (value == 'delete') {
-                                          final confirm = await showDialog<bool>(
-                                            context: context,
-                                            builder: (context) => AlertDialog(
-                                              title: const Text('Delete Student'),
-                                              content: Text('Delete ${student.name}?'),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () => Navigator.pop(context, false),
-                                                  child: const Text('Cancel'),
-                                                ),
-                                                TextButton(
-                                                  onPressed: () => Navigator.pop(context, true),
-                                                  child: const Text('Delete', style: TextStyle(color: Colors.red)),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                          if (confirm == true && mounted) {
-                                            try {
-                                              await StudentService.deleteStudent(student.id);
-                                              if (!mounted) return;
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(content: Text('Student deleted')),
-                                              );
-                                              _fetchStudents();
-                                            } catch (e) {
-                                              if (!mounted) return;
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
-                                              );
-                                            }
-                                          }
-                                        }
-                                      },
-                                      itemBuilder: (context) => const [
-                                        PopupMenuItem(
-                                          value: 'update',
-                                          child: Row(
-                                            children: [
-                                              Icon(Icons.edit, size: 18),
-                                              SizedBox(width: 8),
-                                              Text('Update'),
-                                            ],
-                                          ),
-                                        ),
-                                        PopupMenuItem(
-                                          value: 'delete',
-                                          child: Row(
-                                            children: [
-                                              Icon(Icons.delete, size: 18, color: Colors.red),
-                                              SizedBox(width: 8),
-                                              Text('Delete', style: TextStyle(color: Colors.red)),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
+                  PopupMenuButton<String>(
+                    padding: EdgeInsets.zero,
+                    icon: Icon(
+                      Icons.more_vert,
+                      size: 18,
+                      color: Colors.grey.shade600,
+                    ),
+                    onSelected: (value) async {
+                      if (value == 'update') {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                AddStudentScreen(studentToEdit: student),
                           ),
                         );
-      },
+                        if (result == true && mounted) {
+                          _fetchStudents();
+                        }
+                      } else if (value == 'delete') {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Delete Student'),
+                            content: Text('Delete ${student.name}?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text(
+                                  'Delete',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirm == true && mounted) {
+                          try {
+                            await StudentService.deleteStudent(student.id);
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Student deleted')),
+                            );
+                            _fetchStudents();
+                          } catch (e) {
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  e.toString().replaceFirst('Exception: ', ''),
+                                ),
+                              ),
+                            );
+                          }
+                        }
+                      }
+                    },
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(
+                        value: 'update',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit, size: 18),
+                            SizedBox(width: 8),
+                            Text('Update'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete, size: 18, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text('Delete', style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
+  }
+
+  ImageProvider? studentAvatarImage(StudentModel student) {
+    final photo = student.photo;
+
+    if (photo == null || photo.isEmpty) {
+      return null;
+    }
+
+    try {
+      final base64String = photo.contains(',') ? photo.split(',').last : photo;
+
+      return MemoryImage(base64Decode(base64String));
+    } catch (e) {
+      debugPrint('Invalid student photo: $e');
+      return null;
+    }
   }
 }
