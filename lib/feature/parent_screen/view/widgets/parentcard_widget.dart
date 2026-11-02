@@ -37,12 +37,12 @@ Widget parentCard(BuildContext context, ParentModel parent) {
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-           SizedBox(height: 5),
+          SizedBox(height: 5),
           Text(
             phone.trim().isEmpty ? 'No phone number' : phone,
             style: TextStyle(fontSize: 13, color: ColorSystem.muted),
           ),
-           SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             '$childrenCount ${childrenCount == 1 ? 'Child' : 'Children'}',
             style: TextStyle(fontSize: 11, color: ColorSystem.primary),
@@ -51,25 +51,18 @@ Widget parentCard(BuildContext context, ParentModel parent) {
       ),
 
       // Children count badge
-      trailing: Container(
-        width: 90,
-        padding: const EdgeInsets.symmetric(vertical: 9),
-        alignment: Alignment.center,
+      trailing: // Arrow Icon
+      Container(
+        width: 32,
+        height: 32,
         decoration: BoxDecoration(
-          color: childrenCount > 0
-              ? const Color(0xFFECFDF3)
-              : const Color(0xFFFFF7E6),
-          borderRadius: BorderRadius.circular(30),
+          color: ColorSystem.primary.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
         ),
-        child: Text(
-          childrenCount > 0 ? 'Assigned' : 'Unassigned',
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: childrenCount > 0
-                ? ColorSystem.success
-                : ColorSystem.warning,
-          ),
+        child: Icon(
+          Icons.chevron_right_rounded,
+          color: ColorSystem.primary,
+          size: 22,
         ),
       ),
       onTap: () {

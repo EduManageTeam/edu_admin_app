@@ -1,88 +1,163 @@
+import 'dart:convert';
+
 import 'package:edu_admin/feature/teacher_screen/model/teacher_model.dart';
-import 'package:edu_admin/feature/teacher_screen/view/widgets/edit_teacher_card_style.dart';
 import 'package:edu_admin/model/color_system.dart';
 import 'package:flutter/material.dart';
 
 class EditTeacherHeader extends StatelessWidget {
   final TeacherModel teacher;
   final String status;
+  final String? photoBase64;
+  final VoidCallback onEditPhoto;
 
   const EditTeacherHeader({
     super.key,
     required this.teacher,
     required this.status,
+    required this.photoBase64,
+    required this.onEditPhoto,
   });
+
+  // Convert Base64 image to ImageProvider
+  ImageProvider? _getPhoto() {
+    final photo = photoBase64;
+
+    if (photo == null || photo.trim().isEmpty) {
+      return null;
+    }
+
+    try {
+      // Support Base64 with or without data URI prefix
+      final encoded = photo.contains(',') ? photo.split(',').last : photo;
+
+      final bytes = base64Decode(base64.normalize(encoded.trim()));
+
+      if (bytes.isEmpty) {
+        return null;
+      }
+
+      return MemoryImage(bytes);
+    } catch (error) {
+      debugPrint('Invalid teacher photo: $error');
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final name = teacher.name.trim();
-    final initials = name.isEmpty
-        ? 'T'
-        : name
-              .split(RegExp(r'\s+'))
-              .take(2)
-              .map((part) => part[0].toUpperCase())
-              .join();
+    final photo = _getPhoto();
 
-    final isActive = status == 'active';
+    final isActive = status.trim().toLowerCase() == 'active';
 
     return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: editTeacherCardDecoration(),
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: ColorSystem.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: ColorSystem.border),
+      ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 32,
-            backgroundColor: ColorSystem.primary.withValues(alpha: 0.10),
-            child: Text(
-              initials,
-              style: TextStyle(
-                color: ColorSystem.primary,
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
+          // Profile photo with camera button
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              CircleAvatar(
+                radius: 26,
+                backgroundColor: ColorSystem.primary.withValues(alpha: 0.10),
+
+                // Display teacher photo
+                foregroundImage: photo,
+
+                // Handle image loading errors
+                onForegroundImageError: photo != null
+                    ? (error, stackTrace) {
+                        debugPrint('Teacher image error: $error');
+                      }
+                    : null,
+
+                // Show person icon when no photo exists
+                child: Icon(
+                  Icons.person_rounded,
+                  size: 28,
+                  color: ColorSystem.primary,
+                ),
               ),
-            ),
+
+              // Camera button on the photo
+              Positioned(
+                right: -3,
+                bottom: -3,
+                child: Material(
+                  color: ColorSystem.primary,
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    onTap: onEditPhoto,
+                    customBorder: const CircleBorder(),
+                    child: const Padding(
+                      padding: EdgeInsets.all(5),
+                      child: Icon(
+                        Icons.camera_alt_rounded,
+                        size: 12,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          SizedBox(width: 12),
+
+          const SizedBox(width: 14),
+
+          // Existing teacher information
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Teacher name
                 Text(
                   teacher.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: ColorSystem.lnk,
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w800,
+                    color: ColorSystem.lnk,
                   ),
                 ),
-                SizedBox(height: 5),
+
+                const SizedBox(height: 5),
+
+                // Teacher ID
                 Text(
                   'Teacher ID #${teacher.id}',
-                  style: TextStyle(color: ColorSystem.muted, fontSize: 11),
+                  style: TextStyle(fontSize: 11, color: ColorSystem.muted),
                 ),
-                SizedBox(height: 8),
+
+                const SizedBox(height: 6),
+
+                // Teacher status
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
+                    horizontal: 8,
+                    vertical: 4,
                   ),
                   decoration: BoxDecoration(
                     color: isActive
-                        ? ColorSystem.success.withValues(alpha: 0.1)
-                        : ColorSystem.warning.withValues(alpha: 0.1),
+                        ? ColorSystem.success.withValues(alpha: 0.12)
+                        : ColorSystem.warning.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     isActive ? 'On Duty' : 'On Leave',
                     style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
                       color: isActive
                           ? ColorSystem.success
                           : ColorSystem.warning,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),

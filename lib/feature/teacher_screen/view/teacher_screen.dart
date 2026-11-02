@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:edu_admin/feature/teacher_screen/provider/teacher_proivder.dart';
 import 'package:edu_admin/feature/teacher_screen/view/widgets/teacher_card.dart';
 import 'package:edu_admin/feature/teacher_screen/view/addteacher_screen.dart';
@@ -76,7 +74,7 @@ class TeacherScreen extends ConsumerWidget {
                 decoration: InputDecoration(
                   hintText: 'Search teacher name, ID or phone',
                   counterText: '',
-                  hintStyle: TextStyle(color: ColorSystem.muted, fontSize: 13),
+                  hintStyle: TextStyle(color: ColorSystem.muted, fontSize: 12),
                   prefixIcon: Icon(
                     Icons.search,
                     color: ColorSystem.muted,
@@ -163,7 +161,7 @@ class TeacherScreen extends ConsumerWidget {
                         Text(
                           'Assigned',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 12,
                             color: Color(0xFF64748B),
                           ),
                         ),
@@ -172,7 +170,7 @@ class TeacherScreen extends ConsumerWidget {
                           data: (response) => Text(
                             response.stats.assigned.toString(),
                             style: TextStyle(
-                              fontSize: 30,
+                              fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: ColorSystem.lnk,
                             ),
@@ -191,7 +189,7 @@ class TeacherScreen extends ConsumerWidget {
                         Text(
                           'On duty',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 12,
                             color: Color(0xFF64748B),
                           ),
                         ),
@@ -200,7 +198,7 @@ class TeacherScreen extends ConsumerWidget {
                           data: (response) => Text(
                             response.stats.onDuty.toString(),
                             style: TextStyle(
-                              fontSize: 30,
+                              fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: ColorSystem.success,
                             ),
@@ -219,7 +217,7 @@ class TeacherScreen extends ConsumerWidget {
                         Text(
                           'On leave',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 12,
                             color: Color(0xFF64748B),
                           ),
                         ),
@@ -228,7 +226,7 @@ class TeacherScreen extends ConsumerWidget {
                           data: (response) => Text(
                             response.stats.onLeave.toString(),
                             style: TextStyle(
-                              fontSize: 30,
+                              fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: ColorSystem.danger,
                             ),
@@ -285,8 +283,8 @@ class TeacherScreen extends ConsumerWidget {
                             SizedBox(height: 15),
                             OutlinedButton.icon(
                               onPressed: refreshTeachers,
-                              icon: const Icon(Icons.refresh, size: 18),
-                              label: const Text('Try again'),
+                              icon: Icon(Icons.refresh, size: 18),
+                              label: Text('Try again'),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: ColorSystem.primary,
                                 side: BorderSide(color: ColorSystem.primary),

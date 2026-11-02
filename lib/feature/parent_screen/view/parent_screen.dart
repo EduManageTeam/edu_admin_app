@@ -118,10 +118,9 @@ class ParentScreen extends ConsumerWidget {
               // STATISTICS
               Container(
                 width: double.infinity,
-                height: 100,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
-                  vertical: 12,
+                  vertical: 14,
                 ),
                 decoration: BoxDecoration(
                   color: ColorSystem.surface,
@@ -180,9 +179,9 @@ class ParentScreen extends ConsumerWidget {
                               size: 48,
                               color: ColorSystem.danger,
                             ),
-                             SizedBox(height: 12),
-                             Text('Failed to load parents'),
-                             SizedBox(height: 8),
+                            SizedBox(height: 12),
+                            Text('Failed to load parents'),
+                            SizedBox(height: 8),
                             Padding(
                               padding: const EdgeInsets.all(16),
                               child: Text(
@@ -198,8 +197,8 @@ class ParentScreen extends ConsumerWidget {
                               onPressed: () {
                                 ref.read(parentProvider.notifier).loading();
                               },
-                              icon:  Icon(Icons.refresh),
-                              label:  Text('Try Again'),
+                              icon: Icon(Icons.refresh),
+                              label: Text('Try Again'),
                             ),
                           ],
                         ),
@@ -222,8 +221,8 @@ class ParentScreen extends ConsumerWidget {
                                   color: Color(0xFFC45114),
                                   size: 48,
                                 ),
-                                 SizedBox(height: 12),
-                                 Text(
+                                SizedBox(height: 12),
+                                Text(
                                   'No parents found',
                                   style: TextStyle(
                                     color: Color(0xFFC45114),
@@ -231,7 +230,7 @@ class ParentScreen extends ConsumerWidget {
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
-                                 SizedBox(height: 8),
+                                SizedBox(height: 8),
                                 Text(
                                   search.isNotEmpty
                                       ? 'Try another name, ID or phone'
@@ -388,13 +387,13 @@ class ParentScreen extends ConsumerWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+          style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
         ),
         const SizedBox(height: 8),
         Text(
           value,
           style: TextStyle(
-            fontSize: 30,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
             color: color,
           ),

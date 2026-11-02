@@ -1,9 +1,9 @@
 import 'package:edu_admin/feature/teacher_screen/model/teacher_model.dart';
 import 'package:edu_admin/feature/teacher_screen/provider/teacher_proivder.dart';
+import 'package:edu_admin/feature/teacher_screen/provider/teacherimage_provider.dart';
 import 'package:edu_admin/feature/teacher_screen/view/editteacher_screen.dart';
 import 'package:edu_admin/feature/teacher_screen/view/util/format_date.dart';
 import 'package:edu_admin/feature/teacher_screen/view/util/phone_launcher.dart';
-import 'package:edu_admin/feature/teacher_screen/view/util/string_util.dart';
 import 'package:edu_admin/feature/teacher_screen/view/widgets/profilecard_widget.dart';
 import 'package:edu_admin/feature/teacher_screen/view/widgets/teacher_profile_class_row.dart';
 import 'package:edu_admin/feature/teacher_screen/view/widgets/teacher_profile_login_info.dart';
@@ -17,11 +17,14 @@ class TeacherProfileScreen extends ConsumerWidget {
   final TeacherModel teacher;
 
   const TeacherProfileScreen({super.key, required this.teacher});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Get teacher detail
     final teacherDetailData = ref.watch(teacherDetailProvider(teacher.id));
+
     return Scaffold(
+      backgroundColor: ColorSystem.appBG,
       appBar: AppBar(
         backgroundColor: ColorSystem.appBG,
         elevation: 0,
@@ -64,7 +67,7 @@ class TeacherProfileScreen extends ConsumerWidget {
                       color: ColorSystem.danger,
                       size: 20,
                     ),
-                    SizedBox(width: 10),
+                    const SizedBox(width: 10),
                     Text(
                       'Delete Teacher',
                       style: TextStyle(
@@ -79,10 +82,12 @@ class TeacherProfileScreen extends ConsumerWidget {
           ),
         ],
       ),
-      //teacher detail state
+
+      // Teacher detail state
       body: teacherDetailData.when(
         data: (data) {
           final teacherData = data.teacher;
+
           return SafeArea(
             child: Column(
               children: [
@@ -90,10 +95,10 @@ class TeacherProfileScreen extends ConsumerWidget {
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(12, 8, 12, 18),
                     children: [
-                      // Profile header
+                      // Profile header with Base64 photo
                       _profileHeader(data.teacher),
 
-                      SizedBox(height: 12),
+                      const SizedBox(height: 12),
 
                       // Teaching statistics
                       Row(
@@ -105,7 +110,7 @@ class TeacherProfileScreen extends ConsumerWidget {
                               icon: Icons.groups_rounded,
                             ),
                           ),
-                          SizedBox(width: 10),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: TeacherProfileStatCard(
                               title: 'Students',
@@ -116,17 +121,17 @@ class TeacherProfileScreen extends ConsumerWidget {
                         ],
                       ),
 
-                      SizedBox(height: 18),
+                      const SizedBox(height: 18),
 
                       // Personal information
                       _personalInformation(data),
 
-                      SizedBox(height: 18),
+                      const SizedBox(height: 18),
 
                       // Login information
                       TeacherProfileLoginInfo(loginId: data.loginId),
 
-                      SizedBox(height: 18),
+                      const SizedBox(height: 18),
 
                       // Assigned classes
                       _assignedClasses(data),
@@ -151,7 +156,6 @@ class TeacherProfileScreen extends ConsumerWidget {
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () async {
-                              // Contact
                               try {
                                 await PhoneLauncher.call(teacherData.phone);
                               } catch (error) {
@@ -166,8 +170,8 @@ class TeacherProfileScreen extends ConsumerWidget {
                                 );
                               }
                             },
-                            icon: Icon(Icons.phone_outlined, size: 18),
-                            label: Text('Contact'),
+                            icon: const Icon(Icons.phone_outlined, size: 18),
+                            label: const Text('Contact'),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: ColorSystem.primary,
                               backgroundColor: ColorSystem.surface,
@@ -180,13 +184,13 @@ class TeacherProfileScreen extends ConsumerWidget {
                           ),
                         ),
 
-                        SizedBox(width: 10),
+                        const SizedBox(width: 10),
 
                         // Edit teacher
                         Expanded(
                           child: ElevatedButton.icon(
                             onPressed: () {
-                              _openEditTeacher(context, data);
+                              _openEditTeacher(context, ref, data);
                             },
                             icon: const Icon(Icons.edit_rounded, size: 18),
                             label: const Text('Edit Teacher'),
@@ -236,9 +240,8 @@ class TeacherProfileScreen extends ConsumerWidget {
                     ),
                   ),
 
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-                  // Title
                   Text(
                     'Unable to load teachers',
                     textAlign: TextAlign.center,
@@ -249,9 +252,8 @@ class TeacherProfileScreen extends ConsumerWidget {
                     ),
                   ),
 
-                  SizedBox(height: 10),
+                  const SizedBox(height: 10),
 
-                  // Description
                   Text(
                     'Something went wrong while loading teachers.\n'
                     'Please try again.',
@@ -263,7 +265,7 @@ class TeacherProfileScreen extends ConsumerWidget {
                     ),
                   ),
 
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
                   // Error details
                   Container(
@@ -289,7 +291,7 @@ class TeacherProfileScreen extends ConsumerWidget {
                     ),
                   ),
 
-                  SizedBox(height: 22),
+                  const SizedBox(height: 22),
 
                   // Retry button
                   SizedBox(
@@ -299,8 +301,8 @@ class TeacherProfileScreen extends ConsumerWidget {
                       onPressed: () {
                         ref.invalidate(allTeacherDetailsProvider);
                       },
-                      icon: Icon(Icons.refresh_rounded, size: 19),
-                      label: Text(
+                      icon: const Icon(Icons.refresh_rounded, size: 19),
+                      label: const Text(
                         'Try Again',
                         style: TextStyle(
                           fontSize: 13,
@@ -326,9 +328,28 @@ class TeacherProfileScreen extends ConsumerWidget {
     );
   }
 
+  // Build a readable fallback initials (e.g. "John Doe" -> "JD")
+  static String _initials(String value) {
+    final trimmed = value.trim();
+
+    if (trimmed.isEmpty) return '';
+
+    final parts = trimmed.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+
+    return parts[0][0].toUpperCase();
+  }
+
   // Profile header
   Widget _profileHeader(TeacherModel teacher) {
     final isActive = teacher.status.trim().toLowerCase() == 'active';
+
+    // Decode teacher Base64 photo
+    final photo = teacherAvatarProvider(teacher);
+    final initials = _initials(teacher.name);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -346,20 +367,62 @@ class TeacherProfileScreen extends ConsumerWidget {
       ),
       child: Row(
         children: [
+          // Profile image with status indicator
           Stack(
+            clipBehavior: Clip.none,
             children: [
-              CircleAvatar(
-                radius: 35,
-                backgroundColor: ColorSystem.primary.withValues(alpha: 0.10),
-                child: Text(
-                  getInitials(teacher.name),
-                  style: TextStyle(
-                    color: ColorSystem.primary,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
+              Container(
+                width: 78,
+                height: 78,
+                padding: const EdgeInsets.all(2.5),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      ColorSystem.primary.withValues(alpha: 0.55),
+                      ColorSystem.primary.withValues(alpha: 0.25),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: ColorSystem.primary.withValues(alpha: 0.18),
+                      blurRadius: 12,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: ColorSystem.surface,
+                    shape: BoxShape.circle,
+                  ),
+                  child: CircleAvatar(
+                    radius: 36.5,
+                    backgroundColor: ColorSystem.primary.withValues(alpha: 0.08),
+                    foregroundImage: photo,
+                    onForegroundImageError: photo != null
+                        ? (error, stackTrace) {
+                            debugPrint('Teacher photo error: $error');
+                          }
+                        : null,
+                    child: photo == null
+                        ? Text(
+                            initials,
+                            style: TextStyle(
+                              color: ColorSystem.primary,
+                              fontSize: 30,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                            ),
+                          )
+                        : null,
                   ),
                 ),
               ),
+
               Positioned(
                 right: 2,
                 bottom: 2,
@@ -375,7 +438,10 @@ class TeacherProfileScreen extends ConsumerWidget {
               ),
             ],
           ),
-          SizedBox(width: 13),
+
+          const SizedBox(width: 13),
+
+          // Teacher information
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -390,12 +456,16 @@ class TeacherProfileScreen extends ConsumerWidget {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                SizedBox(height: 4),
+
+                const SizedBox(height: 4),
+
                 Text(
                   'Teacher ID #${teacher.id}',
                   style: TextStyle(color: ColorSystem.muted, fontSize: 12),
                 ),
-                SizedBox(height: 9),
+
+                const SizedBox(height: 9),
+
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
@@ -420,7 +490,7 @@ class TeacherProfileScreen extends ConsumerWidget {
                           shape: BoxShape.circle,
                         ),
                       ),
-                      SizedBox(width: 6),
+                      const SizedBox(width: 6),
                       Text(
                         isActive ? 'On Duty' : 'On Leave',
                         style: TextStyle(
@@ -457,7 +527,7 @@ class TeacherProfileScreen extends ConsumerWidget {
             color: ColorSystem.danger,
             size: 36,
           ),
-          title: Text('Delete Teacher?', textAlign: TextAlign.center),
+          title: const Text('Delete Teacher?', textAlign: TextAlign.center),
           content: const Text(
             'Are you sure you want to delete this teacher? '
             'This action cannot be undone.',
@@ -479,14 +549,16 @@ class TeacherProfileScreen extends ConsumerWidget {
                 backgroundColor: ColorSystem.danger,
                 foregroundColor: Colors.white,
               ),
-              child: Text('Delete'),
+              child: const Text('Delete'),
             ),
           ],
         );
       },
     );
 
-    if (confirmed != true || !context.mounted) return;
+    if (confirmed != true || !context.mounted) {
+      return;
+    }
 
     try {
       // Delete teacher through provider
@@ -496,7 +568,7 @@ class TeacherProfileScreen extends ConsumerWidget {
 
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Teacher deleted successfully'),
           behavior: SnackBarBehavior.floating,
         ),
@@ -517,12 +589,13 @@ class TeacherProfileScreen extends ConsumerWidget {
     }
   }
 
-  // Edit teacher
+  // Open edit teacher and refresh after updating
   Future<void> _openEditTeacher(
     BuildContext context,
+    WidgetRef ref,
     TeacherDetailModel detail,
   ) async {
-    await Navigator.push<bool>(
+    final updated = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (context) => EditTeacherScreen(
@@ -541,6 +614,13 @@ class TeacherProfileScreen extends ConsumerWidget {
         ),
       ),
     );
+
+    if (!context.mounted) return;
+
+    if (updated == true) {
+      // Reload teacher data including updated photo
+      ref.invalidate(allTeacherDetailsProvider);
+    }
   }
 
   // Assigned classes
@@ -555,7 +635,9 @@ class TeacherProfileScreen extends ConsumerWidget {
           icon: Icons.school_outlined,
           trailing: '${detail.classesCount} Classes',
         ),
-        SizedBox(height: 9),
+
+        const SizedBox(height: 9),
+
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           decoration: cardDecoration(),
@@ -584,6 +666,7 @@ class TeacherProfileScreen extends ConsumerWidget {
                   ],
                 ),
         ),
+
         SizedBox(height: 12),
       ],
     );
@@ -599,7 +682,9 @@ class TeacherProfileScreen extends ConsumerWidget {
           title: 'Personal Information',
           icon: Icons.person_rounded,
         ),
-        SizedBox(height: 9),
+
+        const SizedBox(height: 9),
+
         Container(
           decoration: cardDecoration(),
           child: Column(
@@ -609,13 +694,17 @@ class TeacherProfileScreen extends ConsumerWidget {
                 label: 'Gender',
                 value: teacher.gender,
               ),
+
               divider(),
+
               InfoRow(
                 icon: Icons.phone_rounded,
                 label: 'Phone',
                 value: teacher.phone.isEmpty ? 'Not provided' : teacher.phone,
               ),
+
               divider(),
+
               InfoRow(
                 icon: Icons.email_outlined,
                 label: 'Email',
@@ -623,7 +712,9 @@ class TeacherProfileScreen extends ConsumerWidget {
                     ? teacher.email!
                     : 'Not provided',
               ),
+
               divider(),
+
               InfoRow(
                 icon: Icons.location_on_outlined,
                 label: 'Address',
@@ -631,7 +722,9 @@ class TeacherProfileScreen extends ConsumerWidget {
                     ? 'Not provided'
                     : teacher.address,
               ),
+
               divider(),
+
               InfoRow(
                 icon: Icons.calendar_month_outlined,
                 label: 'Joined',

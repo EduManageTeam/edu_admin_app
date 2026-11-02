@@ -2,7 +2,7 @@
 class ApiConfig {
   // true  = teacher's server on Render
   // false = your own Laravel on this PC (php artisan serve)
-  static const bool useRender = true;
+  static const bool useRender = false;
 
   // Local addresses:
   //  - Android emulator:  http://10.0.2.2:8000

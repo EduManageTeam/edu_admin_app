@@ -2,6 +2,7 @@ import 'package:edu_admin/feature/home_feature/service/auth_service.dart';
 import 'package:edu_admin/feature/teacher_screen/model/teacher_model.dart';
 import 'package:edu_admin/feature/teacher_screen/model/teacher_response_model.dart';
 import 'package:edu_admin/feature/teacher_screen/model/teacherstats_model.dart';
+import 'package:edu_admin/feature/teacher_screen/provider/teacherimage_provider.dart';
 import 'package:edu_admin/feature/teacher_screen/service/teacher_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -140,6 +141,7 @@ class TeacherNotifier extends AsyncNotifier<TeacherResponse> {
       'phone': teacher.phone,
       'email': teacher.email,
       'address': teacher.address,
+      'photo': teacher.photo,
       'status': teacher.status,
     });
 
@@ -257,6 +259,8 @@ class AddTeacherFormNotifier extends Notifier<AddTeacherFormState> {
     state = state.copyWith(isCreating: true);
 
     try {
+      final photo = ref.read(teacherPhotoProvider);
+
       final teacher = TeacherModel(
         id: 0,
         name: nameController.text.trim(),
@@ -266,7 +270,7 @@ class AddTeacherFormNotifier extends Notifier<AddTeacherFormState> {
             ? null
             : emailController.text.trim(),
         address: addressController.text.trim(),
-        photo: null,
+        photo: photo,
         status: state.status.toLowerCase(),
       );
 
