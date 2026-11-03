@@ -40,6 +40,7 @@ dependencies:
   fl_chart: ^1.3.0
   url_launcher: ^6.3.3
   image_picker: ^1.2.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -61,9 +62,9 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: false
-  image_path: "assets/icon/AdminIcon2.png"
+  image_path: "assets/icon/AdminIcon3.png"
   adaptive_icon_background: "#66E98B"
-  adaptive_icon_foreground: "assets/icon/AdminIcon2.png"
+  adaptive_icon_foreground: "assets/icon/AdminIcon3.png"
   min_sdk_android: 21
 
 flutter_native_splash:
