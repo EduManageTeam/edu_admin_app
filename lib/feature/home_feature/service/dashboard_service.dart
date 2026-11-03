@@ -8,8 +8,6 @@ import '../model/dashboard_stats.dart';
 import 'auth_service.dart';
 
 class DashboardService {
-  /// GET one endpoint with the saved token and return the decoded JSON.
-  /// Throws a clear error if the server reports a problem.
   static Future<dynamic> _get(String path, String token) async {
     final response = await http.get(
       Uri.parse('${ApiConfig.baseUrl}${ApiConfig.apiPrefix}$path'),

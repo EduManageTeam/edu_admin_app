@@ -16,15 +16,6 @@ import 'attendance_overview_screen.dart';
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
-  // ======================================================================
-  // WHERE EACH CARD OPENS - change these 4 lines to choose.
-  //
-  // A) Open a TAB of the bottom navigation bar (the bar stays visible):
-  //      _goToTab(AppTabs.students)   // or .people / .school / .more / .home
-  //
-  // B) Open a plain page on top (NO bottom bar, with a back button):
-  //      _openPage(context, const SomeDetailPage())
-  // ======================================================================
   void _openStudents(BuildContext context, WidgetRef ref) =>
       _goToTab(AppTabs.students);
 
