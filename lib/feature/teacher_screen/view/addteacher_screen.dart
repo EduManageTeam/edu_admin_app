@@ -1,54 +1,16 @@
+import 'dart:convert';
+
 import 'package:edu_admin/feature/teacher_screen/provider/teacher_proivder.dart';
+import 'package:edu_admin/feature/teacher_screen/provider/teacherimage_provider.dart';
 import 'package:edu_admin/feature/teacher_screen/view/widgets/dropdown_widget.dart';
 import 'package:edu_admin/feature/teacher_screen/view/widgets/textfield_widget.dart';
 import 'package:edu_admin/model/color_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 class AddTeacherScreen extends ConsumerWidget {
   const AddTeacherScreen({super.key});
-
-  // Create teacher
-  Future<void> _submit(BuildContext context, WidgetRef ref) async {
-    final notifier = ref.read(addTeacherFormProvider.notifier);
-
-    if (ref.read(addTeacherFormProvider).isCreating) {
-      return;
-    }
-
-    // Validate form before submitting
-    if (!(notifier.formKey.currentState?.validate() ?? false)) {
-      return;
-    }
-
-    try {
-      await notifier.createTeacher();
-
-      if (!context.mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Teacher created successfully'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-
-      Navigator.pop(context, true);
-    } catch (error, stackTrace) {
-      debugPrint('ADD TEACHER ERROR: $error');
-      debugPrintStack(stackTrace: stackTrace);
-
-      if (!context.mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Unable to create teacher: $error'),
-          backgroundColor: ColorSystem.danger,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -74,7 +36,9 @@ class AddTeacherScreen extends ConsumerWidget {
                     icon: const Icon(Icons.arrow_back_ios_new, size: 18),
                     color: ColorSystem.lnk,
                   ),
+
                   SizedBox(width: 5),
+
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -86,7 +50,9 @@ class AddTeacherScreen extends ConsumerWidget {
                           color: ColorSystem.lnk,
                         ),
                       ),
+
                       SizedBox(height: 2),
+
                       Text(
                         'Complete the required information',
                         style: TextStyle(
@@ -110,6 +76,11 @@ class AddTeacherScreen extends ConsumerWidget {
                   key: form.formKey,
                   child: Column(
                     children: [
+                      // Teacher photo
+                      _photoPicker(context, ref),
+
+                      SizedBox(height: 12),
+
                       // Login ID
                       buildTextField(
                         label: 'Login ID',
@@ -141,7 +112,6 @@ class AddTeacherScreen extends ConsumerWidget {
 
                       SizedBox(height: 12),
 
-                      // Gender
                       buildDropdown(
                         label: 'Gender',
                         hint: 'Select gender',
@@ -193,7 +163,7 @@ class AddTeacherScreen extends ConsumerWidget {
 
                       SizedBox(height: 12),
 
-                      // Address - multiline
+                      // Address
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -205,7 +175,9 @@ class AddTeacherScreen extends ConsumerWidget {
                               color: ColorSystem.lnk,
                             ),
                           ),
+
                           SizedBox(height: 7),
+
                           TextFormField(
                             controller: form.addressController,
                             keyboardType: TextInputType.multiline,
@@ -214,6 +186,7 @@ class AddTeacherScreen extends ConsumerWidget {
                             maxLines: 5,
                             maxLength: 255,
                             textAlignVertical: TextAlignVertical.top,
+                            cursorColor: ColorSystem.primary,
                             style: TextStyle(
                               fontSize: 13,
                               color: ColorSystem.lnk,
@@ -266,9 +239,9 @@ class AddTeacherScreen extends ConsumerWidget {
                         onChanged: form.setStatus,
                       ),
 
-                      const SizedBox(height: 20),
+                      SizedBox(height: 20),
 
-                      // Create button
+                      // Create Teacher button
                       SizedBox(
                         height: 50,
                         width: double.infinity,
@@ -285,9 +258,6 @@ class AddTeacherScreen extends ConsumerWidget {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             elevation: 0,
-                            shadowColor: ColorSystem.primary.withValues(
-                              alpha: 0.3,
-                            ),
                           ),
                           child: formState.isCreating
                               ? const SizedBox(
@@ -311,7 +281,6 @@ class AddTeacherScreen extends ConsumerWidget {
                                 ),
                         ),
                       ),
-
                       SizedBox(height: 16),
                     ],
                   ),
@@ -320,6 +289,178 @@ class AddTeacherScreen extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // Pick teacher photo from camera or gallery
+  Future<void> _pickPhoto(
+    BuildContext context,
+    WidgetRef ref,
+    ImageSource source,
+  ) async {
+    try {
+      final picker = ImagePicker();
+
+      final picked = await picker.pickImage(
+        source: source,
+        imageQuality: 70,
+        maxWidth: 800,
+        maxHeight: 800,
+      );
+
+      if (picked == null) return;
+
+      final bytes = await picked.readAsBytes();
+      final base64String = base64Encode(bytes);
+
+      if (!context.mounted) return;
+
+      ref.read(teacherPhotoProvider.notifier).state = base64String;
+
+      debugPrint('Teacher photo selected successfully');
+      debugPrint('Photo size: ${bytes.length} bytes');
+      debugPrint('Base64 length: ${base64String.length}');
+    } catch (error) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to select photo: $error'),
+          backgroundColor: ColorSystem.danger,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  // Create teacher
+  Future<void> _submit(BuildContext context, WidgetRef ref) async {
+    final notifier = ref.read(addTeacherFormProvider.notifier);
+
+    if (ref.read(addTeacherFormProvider).isCreating) {
+      return;
+    }
+
+    // Validate form before submitting
+    if (!(notifier.formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+
+    try {
+      await notifier.createTeacher();
+
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Teacher created successfully'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+
+      Navigator.pop(context, true);
+    } catch (error, stackTrace) {
+      debugPrint('ADD TEACHER ERROR: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Unable to create teacher: $error'),
+          backgroundColor: ColorSystem.danger,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  // Photo picker
+  Widget _photoPicker(BuildContext context, WidgetRef ref) {
+    final photoBase64 = ref.watch(teacherPhotoProvider);
+
+    return Center(
+      child: Column(
+        children: [
+          // Teacher photo preview
+          Container(
+            width: 104,
+            height: 104,
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [
+                  ColorSystem.primary.withValues(alpha: 0.55),
+                  ColorSystem.primary.withValues(alpha: 0.25),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: ColorSystem.primary.withValues(alpha: 0.18),
+                  blurRadius: 14,
+                  spreadRadius: 1,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: ColorSystem.surface,
+                shape: BoxShape.circle,
+              ),
+              child: CircleAvatar(
+                radius: 48,
+                backgroundColor: ColorSystem.primary.withValues(alpha: 0.08),
+                foregroundImage: photoBase64 != null && photoBase64.isNotEmpty
+                    ? MemoryImage(base64Decode(photoBase64))
+                    : null,
+                onForegroundImageError:
+                    photoBase64 != null && photoBase64.isNotEmpty
+                    ? (error, stackTrace) {
+                        debugPrint('Unable to display teacher photo: $error');
+                      }
+                    : null,
+                child: photoBase64 == null || photoBase64.isEmpty
+                    ? Icon(
+                        Icons.person_rounded,
+                        size: 48,
+                        color: ColorSystem.primary,
+                      )
+                    : null,
+              ),
+            ),
+          ),
+
+          SizedBox(height: 8),
+
+          // Camera and Gallery
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextButton.icon(
+                onPressed: () => _pickPhoto(context, ref, ImageSource.camera),
+                icon: const Icon(Icons.camera_alt_outlined),
+                label: const Text('Take Photo'),
+                style: TextButton.styleFrom(
+                  foregroundColor: ColorSystem.primary,
+                ),
+              ),
+
+              TextButton.icon(
+                onPressed: () => _pickPhoto(context, ref, ImageSource.gallery),
+                icon: const Icon(Icons.photo_library_outlined),
+                label: const Text('Choose Photo'),
+                style: TextButton.styleFrom(
+                  foregroundColor: ColorSystem.primary,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

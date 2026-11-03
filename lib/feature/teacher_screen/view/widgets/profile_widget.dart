@@ -3,32 +3,46 @@ import 'package:flutter/material.dart';
 
 class ProfileAvatar extends StatelessWidget {
   final String name;
+  final ImageProvider? image;
   final double size;
-  const ProfileAvatar({super.key, required this.name, this.size = 46});
 
-  String get _initials {
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
-    return parts.isEmpty ? "" : parts[0][0].toUpperCase();
-  }
+  const ProfileAvatar({
+    super.key,
+    required this.name,
+    this.image,
+    this.size = 46,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return CircleAvatar(
-      radius: size / 2,
-      backgroundColor: ColorSystem.light,
-      child: Text(
-        _initials,
-        style: TextStyle(
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: ColorSystem.primary.withValues(alpha: 0.10),
+      ),
+      child: CircleAvatar(
+        radius: size / 2,
+        backgroundColor: Colors.transparent,
+
+        // Display teacher photo
+        foregroundImage: image,
+
+        // Handle image loading errors
+        onForegroundImageError: image != null
+            ? (error, stackTrace) {
+                debugPrint('Unable to display teacher photo: $error');
+              }
+            : null,
+
+        // Fallback person icon
+        child: Icon(
+          Icons.person_rounded,
           color: ColorSystem.primary,
-          fontWeight: FontWeight.bold,
-          fontSize: size * 0.36,
+          size: size * 0.48,
         ),
       ),
     );
   }
 }
-
-

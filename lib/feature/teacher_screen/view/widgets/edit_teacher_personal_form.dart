@@ -43,7 +43,7 @@ class EditTeacherPersonalForm extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 19),
-            child: TeacherProfileIconBox(icon: icon),
+            child: ProfileIconBox(icon: icon),
           ),
           SizedBox(width: 12),
           Expanded(
@@ -85,7 +85,7 @@ class EditTeacherPersonalForm extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 19),
-            child: TeacherProfileIconBox(icon: icon),
+            child: ProfileIconBox(icon: icon),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -123,7 +123,7 @@ class EditTeacherPersonalForm extends StatelessWidget {
       decoration: editTeacherCardDecoration(),
       child: Column(
         children: [
-          TeacherProfileSectionTitle(
+          ProfileSectionTitle(
             title: 'Personal Information',
             icon: Icons.person_rounded,
           ),
@@ -202,7 +202,7 @@ class EditTeacherPersonalForm extends StatelessWidget {
           if (joined != null)
             Row(
               children: [
-                TeacherProfileIconBox(icon: Icons.calendar_month_outlined),
+                ProfileIconBox(icon: Icons.calendar_month_outlined),
                 SizedBox(width: 12),
                 Expanded(
                   child: Text(

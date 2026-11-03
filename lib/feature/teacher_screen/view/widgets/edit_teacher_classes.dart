@@ -16,7 +16,7 @@ class EditTeacherClasses extends StatelessWidget {
       decoration: editTeacherCardDecoration(),
       child: Column(
         children: [
-          const TeacherProfileSectionTitle(
+          const ProfileSectionTitle(
             title: 'Assigned Classes',
             icon: Icons.school_outlined,
             trailing: 'View Only',
@@ -46,7 +46,7 @@ class EditTeacherClasses extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const TeacherProfileIconBox(icon: Icons.menu_book_outlined),
+                  const ProfileIconBox(icon: Icons.menu_book_outlined),
                   SizedBox(width: 11),
                   Expanded(
                     child: Column(
@@ -90,14 +90,6 @@ class EditTeacherClasses extends StatelessWidget {
             );
           }),
           SizedBox(height: 7),
-          Text(
-            'Class assignments are managed separately in School Management.',
-            style: TextStyle(
-              color: ColorSystem.muted,
-              fontSize: 11,
-              height: 1.5,
-            ),
-          ),
         ],
       ),
     );

@@ -1,87 +1,75 @@
+import 'package:edu_admin/feature/parent_screen/model/parent_model.dart';
 import 'package:edu_admin/feature/parent_screen/view/parentprofile_screen.dart';
+import 'package:edu_admin/feature/teacher_screen/view/widgets/profile_widget.dart';
 import 'package:edu_admin/model/color_system.dart';
 import 'package:flutter/material.dart';
 
-Widget parentCard(
-  BuildContext context,
-  String name,
-  String parentId,
-  int children,
-  String status,
-) {
-  bool isActive = status == "Active";
-  final initial = name.trim().isEmpty ? "" : name.trim()[0].toUpperCase();
+Widget parentCard(BuildContext context, ParentModel parent) {
+  final String name = parent.name;
+  final String phone = parent.phone;
+  final int childrenCount = parent.childrenCount;
 
   return Card(
     color: ColorSystem.surface,
     elevation: 2,
-    margin: const EdgeInsets.only(bottom: 10),
+    margin: const EdgeInsets.only(bottom: 12),
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(18),
       side: BorderSide(color: ColorSystem.border),
     ),
     child: ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      leading: Container(
-        width: 40,
-        height: 40,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: ColorSystem.light,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Text(
-          initial,
-          style: TextStyle(
-            color: ColorSystem.primary,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+
+      // Avatar
+      leading: ProfileAvatar(name: name, size: 46),
+
+      // Parent name
       title: Text(
         name,
         style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
           color: ColorSystem.lnk,
         ),
-        overflow: TextOverflow.ellipsis,
       ),
-      subtitle: Text(
-        "Parent #$parentId · ${children == 1 ? "1 child" : "$children children"}",
-        style: TextStyle(fontSize: 11, color: ColorSystem.muted),
-        overflow: TextOverflow.ellipsis,
-      ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
+
+      // Phone and children count
+      subtitle: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: isActive
-                  ? const Color(0xFFECFDF3)
-                  : const Color(0xFFFEF3F2),
-              borderRadius: BorderRadius.circular(20),
-            ),
+          Icon(Icons.phone_outlined, size: 14, color: ColorSystem.muted),
+          SizedBox(width: 5),
+          Expanded(
             child: Text(
-              status,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: isActive ? ColorSystem.success : ColorSystem.danger,
-              ),
+              phone.isEmpty ? 'No phone number' : phone,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: ColorSystem.muted, fontSize: 12),
             ),
           ),
-          SizedBox(width: 6),
-          Icon(Icons.chevron_right, color: ColorSystem.muted, size: 20),
         ],
       ),
+
+      // Arrow icon
+      trailing: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: ColorSystem.primary.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          Icons.chevron_right_rounded,
+          color: ColorSystem.primary,
+          size: 22,
+        ),
+      ),
+
       onTap: () {
-        // navigate to parent details screen
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const ParentProfileScreen()),
+          MaterialPageRoute(
+            builder: (context) => ParentProfileScreen(parent: parent),
+          ),
         );
       },
     ),

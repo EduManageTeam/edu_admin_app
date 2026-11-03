@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:edu_admin/feature/teacher_screen/model/teacher_model.dart';
 import 'package:edu_admin/feature/teacher_screen/provider/teacher_proivder.dart';
 import 'package:edu_admin/feature/teacher_screen/view/widgets/edit_teacher_header.dart';
@@ -7,6 +9,7 @@ import 'package:edu_admin/feature/teacher_screen/view/widgets/edit_teacher_class
 import 'package:edu_admin/model/color_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 class EditTeacherScreen extends ConsumerStatefulWidget {
   final TeacherModel teacher;
@@ -43,6 +46,9 @@ class _EditTeacherScreenState extends ConsumerState<EditTeacherScreen> {
   late String _gender;
   late String _status;
 
+  // Existing or newly selected Base64 photo
+  String? _photoBase64;
+
   bool _isSaving = false;
   bool _isResetting = false;
 
@@ -56,6 +62,9 @@ class _EditTeacherScreenState extends ConsumerState<EditTeacherScreen> {
     _phoneController = TextEditingController(text: teacher.phone);
     _emailController = TextEditingController(text: teacher.email ?? '');
     _addressController = TextEditingController(text: teacher.address);
+
+    // Load existing photo
+    _photoBase64 = teacher.photo;
 
     final gender = teacher.gender.trim().toLowerCase();
 
@@ -77,6 +86,280 @@ class _EditTeacherScreenState extends ConsumerState<EditTeacherScreen> {
     _confirmPasswordController.dispose();
 
     super.dispose();
+  }
+
+  // Pick teacher photo from camera or gallery
+  Future<void> _pickPhoto(ImageSource source) async {
+    if (_isSaving || _isResetting) return;
+
+    try {
+      final picked = await ImagePicker().pickImage(
+        source: source,
+        imageQuality: 70,
+        maxWidth: 800,
+        maxHeight: 800,
+      );
+
+      if (picked == null) return;
+
+      final bytes = await picked.readAsBytes();
+
+      // Same maximum decoded photo size as Laravel: 2 MB
+      if (bytes.length > 2 * 1024 * 1024) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Photo must not exceed 2 MB'),
+            backgroundColor: ColorSystem.danger,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+
+      final base64String = base64Encode(bytes);
+
+      if (!mounted) return;
+
+      setState(() {
+        _photoBase64 = base64String;
+      });
+
+      debugPrint('Teacher photo selected successfully');
+      debugPrint('Photo size: ${bytes.length} bytes');
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to select photo: $error'),
+          backgroundColor: ColorSystem.danger,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  // Show camera/gallery options
+  void _showPhotoOptions() {
+    if (_isSaving || _isResetting) return;
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: ColorSystem.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: ColorSystem.border,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                Text(
+                  'Change Teacher Photo',
+                  style: TextStyle(
+                    color: ColorSystem.lnk,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                ListTile(
+                  leading: Icon(
+                    Icons.camera_alt_outlined,
+                    color: ColorSystem.primary,
+                  ),
+                  title: const Text('Take Photo'),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    _pickPhoto(ImageSource.camera);
+                  },
+                ),
+
+                ListTile(
+                  leading: Icon(
+                    Icons.photo_library_outlined,
+                    color: ColorSystem.primary,
+                  ),
+                  title: const Text('Choose Photo'),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    _pickPhoto(ImageSource.gallery);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: ColorSystem.appBG,
+
+      // App bar
+      appBar: AppBar(
+        backgroundColor: ColorSystem.appBG,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: ColorSystem.lnk,
+            size: 19,
+          ),
+          onPressed: _isSaving || _isResetting
+              ? null
+              : () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Edit Teacher',
+          style: TextStyle(
+            color: ColorSystem.lnk,
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 20),
+                  children: [
+                    // Header: profile photo with camera edit icon
+                    EditTeacherHeader(
+                      teacher: widget.teacher,
+                      status: _status,
+                      photoBase64: _photoBase64,
+                      onEditPhoto: _showPhotoOptions,
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    // Personal information
+                    EditTeacherPersonalForm(
+                      nameController: _nameController,
+                      phoneController: _phoneController,
+                      emailController: _emailController,
+                      addressController: _addressController,
+                      gender: _gender,
+                      status: _status,
+                      joined: widget.joined,
+                      onGenderChanged: (value) {
+                        setState(() => _gender = value);
+                      },
+                      onStatusChanged: (value) {
+                        setState(() => _status = value);
+                      },
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    // Login information
+                    EditTeacherLoginInfo(
+                      loginId: widget.loginId,
+                      passwordController: _passwordController,
+                      confirmPasswordController: _confirmPasswordController,
+                      isResetting: _isResetting,
+                      onResetPassword: _resetPassword,
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    // Assigned classes
+                    EditTeacherClasses(classes: widget.assignedClasses),
+                  ],
+                ),
+              ),
+
+              // Bottom buttons
+              Container(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                decoration: BoxDecoration(
+                  color: ColorSystem.appBG,
+                  border: Border(top: BorderSide(color: ColorSystem.border)),
+                ),
+                child: Row(
+                  children: [
+                    // Cancel
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _isSaving || _isResetting
+                            ? null
+                            : () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: ColorSystem.primary,
+                          minimumSize: const Size.fromHeight(48),
+                          side: BorderSide(color: ColorSystem.primary),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(13),
+                          ),
+                        ),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+
+                    const SizedBox(width: 10),
+
+                    // Save changes
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _isSaving || _isResetting
+                            ? null
+                            : _saveTeacher,
+                        icon: _isSaving
+                            ? const SizedBox(
+                                height: 16,
+                                width: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.save_rounded, size: 18),
+                        label: Text(_isSaving ? 'Saving...' : 'Save Changes'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorSystem.primary,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(13),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   // Validate password
@@ -158,12 +441,17 @@ class _EditTeacherScreenState extends ConsumerState<EditTeacherScreen> {
     }
   }
 
-  // Save teacher personal information
+  // Save teacher information and photo
   Future<void> _saveTeacher() async {
-    if (!_formKey.currentState!.validate()) return;
     if (_isSaving || _isResetting) return;
 
-    setState(() => _isSaving = true);
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
 
     final updatedTeacher = TeacherModel(
       id: widget.teacher.id,
@@ -174,7 +462,10 @@ class _EditTeacherScreenState extends ConsumerState<EditTeacherScreen> {
           ? null
           : _emailController.text.trim(),
       address: _addressController.text.trim(),
-      photo: widget.teacher.photo,
+
+      // Existing or newly selected Base64 photo
+      photo: _photoBase64,
+
       status: _status,
     );
 
@@ -194,6 +485,8 @@ class _EditTeacherScreenState extends ConsumerState<EditTeacherScreen> {
 
       Navigator.pop(context, true);
     } catch (error) {
+      debugPrint('UPDATE TEACHER ERROR: $error');
+
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -205,154 +498,10 @@ class _EditTeacherScreenState extends ConsumerState<EditTeacherScreen> {
       );
     } finally {
       if (mounted) {
-        setState(() => _isSaving = false);
+        setState(() {
+          _isSaving = false;
+        });
       }
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: ColorSystem.appBG,
-
-      // App bar
-      appBar: AppBar(
-        backgroundColor: ColorSystem.appBG,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: ColorSystem.lnk,
-            size: 19,
-          ),
-          onPressed: _isSaving || _isResetting
-              ? null
-              : () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Edit Teacher',
-          style: TextStyle(
-            color: ColorSystem.lnk,
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ),
-
-      body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 20),
-                  children: [
-                    // Teacher header
-                    EditTeacherHeader(teacher: widget.teacher, status: _status),
-
-                    SizedBox(height: 14),
-
-                    // Personal information
-                    EditTeacherPersonalForm(
-                      nameController: _nameController,
-                      phoneController: _phoneController,
-                      emailController: _emailController,
-                      addressController: _addressController,
-                      gender: _gender,
-                      status: _status,
-                      joined: widget.joined,
-                      onGenderChanged: (value) {
-                        setState(() => _gender = value);
-                      },
-                      onStatusChanged: (value) {
-                        setState(() => _status = value);
-                      },
-                    ),
-
-                    SizedBox(height: 14),
-
-                    // Login information
-                    EditTeacherLoginInfo(
-                      loginId: widget.loginId,
-                      passwordController: _passwordController,
-                      confirmPasswordController: _confirmPasswordController,
-                      isResetting: _isResetting,
-                      onResetPassword: _resetPassword,
-                    ),
-
-                    SizedBox(height: 14),
-
-                    // Assigned classes
-                    EditTeacherClasses(classes: widget.assignedClasses),
-                  ],
-                ),
-              ),
-
-              // Bottom buttons
-              Container(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-                decoration: BoxDecoration(
-                  color: ColorSystem.appBG,
-                  border: Border(top: BorderSide(color: ColorSystem.border)),
-                ),
-                child: Row(
-                  children: [
-                    // Cancel
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: _isSaving || _isResetting
-                            ? null
-                            : () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: ColorSystem.primary,
-                          minimumSize: const Size.fromHeight(48),
-                          side: BorderSide(color: ColorSystem.primary),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(13),
-                          ),
-                        ),
-                        child: Text('Cancel'),
-                      ),
-                    ),
-
-                    SizedBox(width: 10),
-
-                    // Save changes
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: _isSaving || _isResetting
-                            ? null
-                            : _saveTeacher,
-                        icon: _isSaving
-                            ? SizedBox(
-                                height: 16,
-                                width: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Icon(Icons.save_rounded, size: 18),
-                        label: Text(_isSaving ? 'Saving...' : 'Save Changes'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: ColorSystem.primary,
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size.fromHeight(48),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(13),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }

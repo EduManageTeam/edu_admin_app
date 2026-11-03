@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:edu_admin/feature/student_screen/model/student_model.dart';
 import 'package:edu_admin/model/color_system.dart';
 import 'package:flutter/material.dart';
@@ -5,10 +7,7 @@ import 'package:flutter/material.dart';
 class StudentProfileScreen extends StatelessWidget {
   final StudentModel student;
 
-  const StudentProfileScreen({
-    super.key,
-    required this.student,
-  });
+  const StudentProfileScreen({super.key, required this.student});
 
   @override
   Widget build(BuildContext context) {
@@ -27,9 +26,7 @@ class StudentProfileScreen extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(
-          color: Color(0xFF202939),
-        ),
+        iconTheme: const IconThemeData(color: Color(0xFF202939)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -46,21 +43,7 @@ class StudentProfileScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  CircleAvatar(
-                    radius: 48,
-                    backgroundColor: ColorSystem.lnk.withOpacity(0.12),
-                    backgroundImage:
-                        student.photo != null && student.photo!.isNotEmpty
-                            ? NetworkImage(student.photo!)
-                            : null,
-                    child: student.photo == null || student.photo!.isEmpty
-                        ? Icon(
-                            Icons.person,
-                            size: 52,
-                            color: ColorSystem.lnk,
-                          )
-                        : null,
-                  ),
+                  _profileAvatar(),
                   const SizedBox(height: 16),
                   Text(
                     student.name,
@@ -74,9 +57,7 @@ class StudentProfileScreen extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     'Student ID: ${student.id}',
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                    ),
+                    style: TextStyle(color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 14),
                   Container(
@@ -110,16 +91,8 @@ class StudentProfileScreen extends StatelessWidget {
             _sectionTitle('Personal Information'),
             const SizedBox(height: 12),
             _infoCard([
-              _infoRow(
-                Icons.person_outline,
-                'Full Name',
-                student.name,
-              ),
-              _infoRow(
-                Icons.wc_outlined,
-                'Gender',
-                student.gender,
-              ),
+              _infoRow(Icons.person_outline, 'Full Name', student.name),
+              _infoRow(Icons.wc_outlined, 'Gender', student.gender),
               _infoRow(
                 Icons.cake_outlined,
                 'Date of Birth',
@@ -133,11 +106,7 @@ class StudentProfileScreen extends StatelessWidget {
             _sectionTitle('Contact Information'),
             const SizedBox(height: 12),
             _infoCard([
-              _infoRow(
-                Icons.phone_outlined,
-                'Phone Number',
-                student.phone,
-              ),
+              _infoRow(Icons.phone_outlined, 'Phone Number', student.phone),
               _infoRow(
                 Icons.location_on_outlined,
                 'Address',
@@ -173,6 +142,26 @@ class StudentProfileScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _profileAvatar() {
+    final hasPhoto = student.photo != null && student.photo!.isNotEmpty;
+    ImageProvider? imageProvider;
+    if (hasPhoto) {
+      try {
+        imageProvider = MemoryImage(base64Decode(student.photo!));
+      } catch (_) {
+        imageProvider = NetworkImage(student.photo!);
+      }
+    }
+    return CircleAvatar(
+      radius: 48,
+      backgroundColor: ColorSystem.lnk.withOpacity(0.12),
+      backgroundImage: imageProvider,
+      child: !hasPhoto
+          ? Icon(Icons.person, size: 52, color: ColorSystem.lnk)
+          : null,
     );
   }
 
@@ -218,11 +207,7 @@ class StudentProfileScreen extends StatelessWidget {
                   color: ColorSystem.lnk.withOpacity(0.10),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(
-                  icon,
-                  size: 20,
-                  color: ColorSystem.lnk,
-                ),
+                child: Icon(icon, size: 20, color: ColorSystem.lnk),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -252,10 +237,7 @@ class StudentProfileScreen extends StatelessWidget {
           ),
           if (!isLast) ...[
             const SizedBox(height: 14),
-            Divider(
-              height: 1,
-              color: Colors.grey.shade200,
-            ),
+            Divider(height: 1, color: Colors.grey.shade200),
           ],
         ],
       ),

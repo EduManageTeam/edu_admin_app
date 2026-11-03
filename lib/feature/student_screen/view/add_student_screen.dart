@@ -1,7 +1,11 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:edu_admin/feature/student_screen/model/student_model.dart';
 import 'package:edu_admin/feature/student_screen/service/student_service.dart';
 import 'package:flutter/material.dart';
 import 'package:edu_admin/model/color_system.dart';
+import 'package:image_picker/image_picker.dart';
 
 class AddStudentScreen extends StatefulWidget {
   final StudentModel? studentToEdit;
@@ -24,6 +28,9 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
   DateTime? dateOfBirth;
   int? classId;
   bool _isSaving = false;
+  File? _photoFile;
+  String? _photoBase64;
+  final _picker = ImagePicker();
 
   @override
   void initState() {
@@ -69,6 +76,38 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
     }
   }
 
+  Future<void> _pickPhoto(ImageSource source) async {
+    try {
+      final picked = await _picker.pickImage(
+        source: source,
+        imageQuality: 70,
+        maxWidth: 800,
+        maxHeight: 800,
+      );
+
+      if (picked == null) return;
+
+      final bytes = await picked.readAsBytes();
+      final base64String = base64Encode(bytes);
+
+      if (!mounted) return;
+
+      setState(() {
+        _photoBase64 = base64String;
+        _photoFile = File(picked.path);
+      });
+
+      debugPrint('Photo selected successfully');
+      debugPrint('Original size: ${bytes.length} bytes');
+      debugPrint('Base64 length: ${base64String.length}');
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to select photo: $e')));
+    }
+  }
+
   Future<void> _saveStudent() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -80,13 +119,13 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
     }
 
     if (classId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a class')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Please select a class')));
       return;
     }
 
-    final dob = '${dateOfBirth!.year.toString().padLeft(4, '0')}-'
+    final dob =
+        '${dateOfBirth!.year.toString().padLeft(4, '0')}-'
         '${dateOfBirth!.month.toString().padLeft(2, '0')}-'
         '${dateOfBirth!.day.toString().padLeft(2, '0')}';
 
@@ -96,7 +135,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
       'date_of_birth': dob,
       'phone': phoneController.text.trim(),
       'address': addressController.text.trim(),
-      'photo': null,
+      'photo': _photoBase64,
       'class_id': classId,
       'parent_id': parentIdController.text.trim().isEmpty
           ? null
@@ -173,6 +212,43 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            Center(
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 48,
+                    backgroundColor: Colors.grey.shade200,
+                    backgroundImage: _photoFile != null
+                        ? FileImage(_photoFile!)
+                        : null,
+                    child: _photoFile == null
+                        ? Icon(
+                            Icons.person,
+                            size: 48,
+                            color: Colors.grey.shade400,
+                          )
+                        : null,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton.icon(
+                        onPressed: () => _pickPhoto(ImageSource.camera),
+                        icon: const Icon(Icons.camera_alt_outlined),
+                        label: const Text('Take Photo'),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => _pickPhoto(ImageSource.gallery),
+                        icon: const Icon(Icons.photo_library_outlined),
+                        label: const Text('Choose Photo'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
             // Student information
             _sectionTitle('Personal Information'),
             const SizedBox(height: 12),
@@ -217,8 +293,8 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                   dateOfBirth == null
                       ? 'Select date of birth'
                       : '${dateOfBirth!.year}-'
-                        '${dateOfBirth!.month.toString().padLeft(2, '0')}-'
-                        '${dateOfBirth!.day.toString().padLeft(2, '0')}',
+                            '${dateOfBirth!.month.toString().padLeft(2, '0')}-'
+                            '${dateOfBirth!.day.toString().padLeft(2, '0')}',
                   style: TextStyle(
                     color: dateOfBirth == null
                         ? Colors.grey.shade600
@@ -252,10 +328,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
               controller: addressController,
               maxLines: 3,
               textCapitalization: TextCapitalization.sentences,
-              decoration: _decoration(
-                'Address',
-                Icons.location_on_outlined,
-              ),
+              decoration: _decoration('Address', Icons.location_on_outlined),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return 'Please enter address';
@@ -318,14 +391,8 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                 Icons.check_circle_outline,
               ),
               items: const [
-                DropdownMenuItem(
-                  value: 'active',
-                  child: Text('Active'),
-                ),
-                DropdownMenuItem(
-                  value: 'inactive',
-                  child: Text('Inactive'),
-                ),
+                DropdownMenuItem(value: 'active', child: Text('Active')),
+                DropdownMenuItem(value: 'inactive', child: Text('Inactive')),
               ],
               onChanged: (value) {
                 if (value != null) setState(() => status = value);
@@ -351,8 +418,12 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                     : const Icon(Icons.save_outlined),
                 label: Text(
                   _isSaving
-                      ? (widget.studentToEdit == null ? 'Saving...' : 'Updating...')
-                      : (widget.studentToEdit == null ? 'Save Student' : 'Update Student'),
+                      ? (widget.studentToEdit == null
+                            ? 'Saving...'
+                            : 'Updating...')
+                      : (widget.studentToEdit == null
+                            ? 'Save Student'
+                            : 'Update Student'),
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

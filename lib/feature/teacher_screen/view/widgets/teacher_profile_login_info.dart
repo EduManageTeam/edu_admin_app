@@ -19,7 +19,7 @@ class TeacherProfileLoginInfo extends StatelessWidget {
         Row(
           children: [
             const Expanded(
-              child: TeacherProfileSectionTitle(
+              child: ProfileSectionTitle(
                 title: 'Login Information',
                 icon: Icons.shield_outlined,
               ),
@@ -69,7 +69,7 @@ class TeacherProfileLoginInfo extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const TeacherProfileIconBox(icon: Icons.badge_outlined),
+                    const ProfileIconBox(icon: Icons.badge_outlined),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
@@ -78,7 +78,7 @@ class TeacherProfileLoginInfo extends StatelessWidget {
                           Text(
                             'Teacher Login ID (U_ID)',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 13,
                               color: ColorSystem.muted,
                             ),
                           ),
@@ -131,7 +131,7 @@ class TeacherProfileLoginInfo extends StatelessWidget {
               // Password display
               Row(
                 children: [
-                  const TeacherProfileIconBox(icon: Icons.lock_outline_rounded),
+                  const ProfileIconBox(icon: Icons.lock_outline_rounded),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
@@ -141,7 +141,7 @@ class TeacherProfileLoginInfo extends StatelessWidget {
                           'Password',
                           style: TextStyle(
                             color: ColorSystem.muted,
-                            fontSize: 11,
+                            fontSize: 13,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -171,7 +171,7 @@ class TeacherProfileLoginInfo extends StatelessWidget {
                 'Login ID cannot be changed. Password can be reset by an authorized admin.',
                 style: TextStyle(
                   color: ColorSystem.muted,
-                  fontSize: 10,
+                  fontSize: 12,
                   height: 1.5,
                 ),
               ),
