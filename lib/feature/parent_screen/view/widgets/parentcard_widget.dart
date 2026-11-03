@@ -34,25 +34,23 @@ Widget parentCard(BuildContext context, ParentModel parent) {
       ),
 
       // Phone and children count
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      subtitle: Row(
         children: [
-          SizedBox(height: 5),
-          Text(
-            phone.trim().isEmpty ? 'No phone number' : phone,
-            style: TextStyle(fontSize: 13, color: ColorSystem.muted),
-          ),
-          SizedBox(height: 8),
-          Text(
-            '$childrenCount ${childrenCount == 1 ? 'Child' : 'Children'}',
-            style: TextStyle(fontSize: 11, color: ColorSystem.primary),
+          Icon(Icons.phone_outlined, size: 14, color: ColorSystem.muted),
+          SizedBox(width: 5),
+          Expanded(
+            child: Text(
+              phone.isEmpty ? 'No phone number' : phone,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: ColorSystem.muted, fontSize: 12),
+            ),
           ),
         ],
       ),
 
-      // Children count badge
-      trailing: // Arrow Icon
-      Container(
+      // Arrow icon
+      trailing: Container(
         width: 32,
         height: 32,
         decoration: BoxDecoration(
@@ -65,6 +63,7 @@ Widget parentCard(BuildContext context, ParentModel parent) {
           size: 22,
         ),
       ),
+
       onTap: () {
         Navigator.push(
           context,

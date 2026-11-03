@@ -1,6 +1,7 @@
 import 'package:edu_admin/feature/parent_screen/provider/parent_provider.dart';
 import 'package:edu_admin/feature/parent_screen/view/addparent_screen.dart';
 import 'package:edu_admin/feature/parent_screen/view/widgets/parentcard_widget.dart';
+import 'package:edu_admin/feature/teacher_screen/view/util/statItem.dart';
 import 'package:edu_admin/model/color_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,175 +17,215 @@ class ParentScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final parentAsync = ref.watch(parentProvider);
+    final parentData = ref.watch(parentProvider);
     final search = ref.watch(parentSearchProvider);
     final filter = ref.watch(parentFilterProvider);
-    final stats = parentAsync.asData?.value.stats;
+    final stats = parentData.asData?.value.stats;
+
+    // Refresh only when user requests it
+    Future<void> refreshParentList() async {
+      ref.invalidate(allParentDetailsProvider);
+      await ref.read(allParentDetailsProvider.future);
+    }
+
     return Scaffold(
       backgroundColor: ColorSystem.appBG,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // HEADER
-              Row(
-                children: [
-                  Text(
-                    'EDUSCHOOL • ADMIN',
-                    style: TextStyle(
-                      color: ColorSystem.primary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.4,
-                    ),
-                  ),
-                  Spacer(),
-                  CircleAvatar(
-                    backgroundColor: const Color.fromARGB(49, 180, 179, 179),
-                    child: Text(
-                      'A',
-                      style: TextStyle(color: ColorSystem.primary),
-                    ),
-                  ),
-                ],
-              ),
+          child: RefreshIndicator(
+            color: ColorSystem.primary,
+            onRefresh: refreshParentList,
 
-              SizedBox(height: 5),
+            // Optimized single scrollable area
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // HEADER
+                      Row(
+                        children: [
+                          Text(
+                            'EDUSCHOOL • ADMIN',
+                            style: TextStyle(
+                              color: ColorSystem.primary,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                          const Spacer(),
+                          CircleAvatar(
+                            backgroundColor: const Color.fromARGB(
+                              49,
+                              180,
+                              179,
+                              179,
+                            ),
+                            child: Text(
+                              'A',
+                              style: TextStyle(color: ColorSystem.primary),
+                            ),
+                          ),
+                        ],
+                      ),
 
-              Text(
-                'Parent',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-              ),
+                      SizedBox(height: 5),
 
-              Text(
-                'Family contact directory',
-                style: TextStyle(color: ColorSystem.muted),
-              ),
+                      Text(
+                        'Parent',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
 
-              SizedBox(height: 12),
+                      Text(
+                        'Family contact directory',
+                        style: TextStyle(color: ColorSystem.muted),
+                      ),
 
-              // SEARCH
-              TextField(
-                maxLength: 100,
-                onChanged: (value) {
-                  ref.read(parentSearchProvider.notifier).state = value.trim();
-                },
-                decoration: InputDecoration(
-                  hintText: 'Search parent name, ID or phone',
-                  counterText: '',
-                  hintStyle: TextStyle(color: ColorSystem.muted, fontSize: 13),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: ColorSystem.muted,
-                    size: 20,
-                  ),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      Icons.tune_rounded,
-                      color: ColorSystem.primary,
-                      size: 21,
-                    ),
-                    tooltip: 'Filter parents',
-                    onPressed: () => _showFilter(context, ref),
-                  ),
-                  filled: true,
-                  fillColor: ColorSystem.surface,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(17),
-                    borderSide: BorderSide(color: ColorSystem.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(17),
-                    borderSide: BorderSide(color: ColorSystem.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(17),
-                    borderSide: BorderSide(
-                      color: ColorSystem.primary,
-                      width: 1.5,
-                    ),
-                  ),
-                ),
-              ),
+                      SizedBox(height: 12),
 
-              SizedBox(height: 12),
+                      // SEARCH
+                      TextField(
+                        maxLength: 100,
+                        onChanged: (value) {
+                          ref.read(parentSearchProvider.notifier).state = value
+                              .trim();
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Search parent name, ID or phone',
+                          counterText: '',
+                          hintStyle: TextStyle(
+                            color: ColorSystem.muted,
+                            fontSize: 13,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: ColorSystem.muted,
+                            size: 20,
+                          ),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              Icons.tune_rounded,
+                              color: ColorSystem.primary,
+                              size: 21,
+                            ),
+                            tooltip: 'Filter parents',
+                            onPressed: () => _showFilter(context, ref),
+                          ),
+                          filled: true,
+                          fillColor: ColorSystem.surface,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(17),
+                            borderSide: BorderSide(color: ColorSystem.border),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(17),
+                            borderSide: BorderSide(color: ColorSystem.border),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(17),
+                            borderSide: BorderSide(
+                              color: ColorSystem.primary,
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                      ),
 
-              // STATISTICS
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-                decoration: BoxDecoration(
-                  color: ColorSystem.surface,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: ColorSystem.border, width: 1),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 14,
-                      spreadRadius: 1,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _statItem(
-                      label: 'Total Parents',
-                      value: '${stats?.total ?? 0}',
-                      color: ColorSystem.lnk,
-                    ),
-                    _statItem(
-                      label: 'Assigned',
-                      value: '${stats?.linked ?? 0}',
-                      color: ColorSystem.success,
-                    ),
-                    _statItem(
-                      label: 'Unassigned',
-                      value: '${stats?.unlinked ?? 0}',
-                      color: ColorSystem.danger,
-                    ),
-                  ],
-                ),
-              ),
+                      SizedBox(height: 12),
 
-              SizedBox(height: 15),
-
-              // PARENT LIST
-              Expanded(
-                child: parentAsync.when(
-                  skipLoadingOnRefresh: true,
-                  loading: () => Center(
-                    child: CircularProgressIndicator(
-                      color: ColorSystem.primary,
-                    ),
-                  ),
-                  error: (error, stackTrace) {
-                    return Center(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
+                      // STATISTICS
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: ColorSystem.surface,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: ColorSystem.border,
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 14,
+                              spreadRadius: 1,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Icon(
-                              Icons.error_outline,
-                              size: 48,
+                            statItem(
+                              label: 'Total Parents',
+                              value: '${stats?.total ?? 0}',
+                              color: ColorSystem.lnk,
+                            ),
+                            statItem(
+                              label: 'Assigned',
+                              value: '${stats?.linked ?? 0}',
+                              color: ColorSystem.success,
+                            ),
+                            statItem(
+                              label: 'Unassigned',
+                              value: '${stats?.unlinked ?? 0}',
                               color: ColorSystem.danger,
                             ),
-                            SizedBox(height: 12),
-                            Text('Failed to load parents'),
-                            SizedBox(height: 8),
-                            Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Text(
+                          ],
+                        ),
+                      ),
+
+                      SizedBox(height: 15),
+                    ],
+                  ),
+                ),
+
+                // Optimized parent list
+                parentData.when(
+                  skipLoadingOnRefresh: true,
+
+                  // LOADING
+                  loading: () => SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: ColorSystem.primary,
+                      ),
+                    ),
+                  ),
+
+                  // ERROR
+                  error: (error, stackTrace) {
+                    return SliverToBoxAdapter(
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                size: 48,
+                                color: ColorSystem.danger,
+                              ),
+                              const SizedBox(height: 12),
+                              const Text('Failed to load parents'),
+                              const SizedBox(height: 8),
+                              Text(
                                 error.toString(),
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
@@ -192,25 +233,28 @@ class ParentScreen extends ConsumerWidget {
                                   fontSize: 12,
                                 ),
                               ),
-                            ),
-                            OutlinedButton.icon(
-                              onPressed: () {
-                                ref.read(parentProvider.notifier).loading();
-                              },
-                              icon: Icon(Icons.refresh),
-                              label: Text('Try Again'),
-                            ),
-                          ],
+                              const SizedBox(height: 15),
+                              OutlinedButton.icon(
+                                onPressed: () {
+                                  ref.read(parentProvider.notifier).loading();
+                                },
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Try Again'),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     );
                   },
+
+                  // SUCCESS
                   data: (response) {
                     final parents = response.parents;
 
                     if (parents.isEmpty) {
-                      return Center(
-                        child: SingleChildScrollView(
+                      return SliverToBoxAdapter(
+                        child: Center(
                           child: Padding(
                             padding: const EdgeInsets.all(16),
                             child: Column(
@@ -221,8 +265,10 @@ class ParentScreen extends ConsumerWidget {
                                   color: Color(0xFFC45114),
                                   size: 48,
                                 ),
-                                SizedBox(height: 12),
-                                Text(
+
+                                 SizedBox(height: 12),
+
+                                 Text(
                                   'No parents found',
                                   style: TextStyle(
                                     color: Color(0xFFC45114),
@@ -230,7 +276,9 @@ class ParentScreen extends ConsumerWidget {
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
-                                SizedBox(height: 8),
+
+                                const SizedBox(height: 8),
+
                                 Text(
                                   search.isNotEmpty
                                       ? 'Try another name, ID or phone'
@@ -243,7 +291,9 @@ class ParentScreen extends ConsumerWidget {
                                     fontSize: 12,
                                   ),
                                 ),
-                                const SizedBox(height: 15),
+
+                                 SizedBox(height: 15),
+
                                 OutlinedButton.icon(
                                   onPressed: () {
                                     _clearFilters(ref);
@@ -273,35 +323,32 @@ class ParentScreen extends ConsumerWidget {
                       );
                     }
 
-                    return RefreshIndicator(
-                      color: ColorSystem.primary,
-                      onRefresh: () =>
-                          ref.read(parentProvider.notifier).loading(),
-                      child: ListView.builder(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.only(
-                          left: 2,
-                          right: 2,
-                          top: 4,
-                          bottom: 100,
-                        ),
-                        itemCount: parents.length,
-                        itemBuilder: (context, index) {
+                    // PARENT CARDS
+                    // Lazy rendering for better performance
+                    return SliverPadding(
+                      padding: const EdgeInsets.only(
+                        left: 2,
+                        right: 2,
+                        top: 4,
+                        bottom: 100,
+                      ),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate((context, index) {
                           final parent = parents[index];
 
                           return parentCard(context, parent);
-                        },
+                        }, childCount: parents.length),
                       ),
                     );
                   },
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
 
-      // ADD PARENT
+      // ADD PARENT - unchanged design
       floatingActionButton: Container(
         height: 54,
         decoration: BoxDecoration(
@@ -332,8 +379,8 @@ class ParentScreen extends ConsumerWidget {
                 ),
               );
 
-              // AddParentFormNotifier invalidates shared cache
-              // after a successful create.
+              // The form invalidates the cache
+              // after successful creation.
             },
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -353,7 +400,7 @@ class ParentScreen extends ConsumerWidget {
                       size: 18,
                     ),
                   ),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   const Text(
                     'Add Parent',
                     style: TextStyle(
@@ -375,33 +422,6 @@ class ParentScreen extends ConsumerWidget {
     );
   }
 
-  // statistic
-  Widget _statItem({
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-      ],
-    );
-  }
-
   // Filter parents
   void _showFilter(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
@@ -418,51 +438,53 @@ class ParentScreen extends ConsumerWidget {
             return SafeArea(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Filter Parents',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: ColorSystem.lnk,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Filter Parents',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: ColorSystem.lnk,
+                        ),
                       ),
-                    ),
 
-                    SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                    _filterTile(
-                      sheetContext,
-                      ref,
-                      title: 'All Parents',
-                      value: 'all',
-                      selected: selectedFilter,
-                      icon: Icons.people_outline_rounded,
-                      color: ColorSystem.primary,
-                    ),
+                      _filterTile(
+                        sheetContext,
+                        ref,
+                        title: 'All Parents',
+                        value: 'all',
+                        selected: selectedFilter,
+                        icon: Icons.people_outline_rounded,
+                        color: ColorSystem.primary,
+                      ),
 
-                    _filterTile(
-                      sheetContext,
-                      ref,
-                      title: 'Assigned',
-                      value: 'linked',
-                      selected: selectedFilter,
-                      icon: Icons.family_restroom_rounded,
-                      color: ColorSystem.success,
-                    ),
+                      _filterTile(
+                        sheetContext,
+                        ref,
+                        title: 'Assigned',
+                        value: 'linked',
+                        selected: selectedFilter,
+                        icon: Icons.family_restroom_rounded,
+                        color: ColorSystem.success,
+                      ),
 
-                    _filterTile(
-                      sheetContext,
-                      ref,
-                      title: 'Unassigned',
-                      value: 'unlinked',
-                      selected: selectedFilter,
-                      icon: Icons.person_outline_rounded,
-                      color: ColorSystem.danger,
-                    ),
-                  ],
+                      _filterTile(
+                        sheetContext,
+                        ref,
+                        title: 'Unassigned',
+                        value: 'unlinked',
+                        selected: selectedFilter,
+                        icon: Icons.person_outline_rounded,
+                        color: ColorSystem.danger,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );

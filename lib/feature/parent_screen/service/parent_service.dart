@@ -10,18 +10,29 @@ import 'package:http/http.dart' as http;
 
 class ParentService {
   final String token;
+  final http.Client _client;
 
-  ParentService({required this.token}) {
+  ParentService({required this.token, http.Client? client})
+    : _client = client ?? http.Client() {
     if (token.trim().isEmpty) {
+      _client.close();
       throw ArgumentError('Authentication token is required');
     }
   }
 
-  // API URL
+  // Close HTTP connections when service is disposed
+  void dispose() {
+    _client.close();
+  }
+
+  // Api Url
   String get baseUrl => '${ApiConfig.baseUrl}${ApiConfig.apiPrefix}/parents';
 
-  // Headers
-  Map<String, String> get headers => {
+  // Reuse parsed URI
+  late final Uri _baseUri = Uri.parse(baseUrl);
+
+  // Reuse authentication headers
+  late final Map<String, String> headers = {
     'Accept': 'application/json',
     'Content-Type': 'application/json',
     'Authorization': 'Bearer $token',
@@ -42,7 +53,7 @@ class ParentService {
     throw const ParentApiException('Invalid response from server.');
   }
 
-  // Check response
+  // Check HTTP response
   void _checkResponse(http.Response response) {
     final status = response.statusCode;
 
@@ -110,12 +121,21 @@ class ParentService {
     }
   }
 
-  // Send request
+  // Shared request handler
   Future<http.Response> _request(
     Future<http.Response> Function() action,
   ) async {
+    final stopwatch = Stopwatch()..start();
+
     try {
       final response = await action().timeout(ApiConfig.timeout);
+
+      stopwatch.stop();
+
+      debugPrint(
+        'PARENT NETWORK: '
+        '${stopwatch.elapsedMilliseconds} ms',
+      );
 
       _checkResponse(response);
 
@@ -126,10 +146,12 @@ class ParentService {
       throw const ParentApiException('Connection timed out. Please try again.');
     } on http.ClientException {
       throw const ParentApiException('Unable to connect to the server.');
+    } finally {
+      stopwatch.stop();
     }
   }
 
-  // Calculate statistics
+  // Calculate statistics if backend does not provide them
   Map<String, int> _calculateStats(List<dynamic> data) {
     int linked = 0;
     int unlinked = 0;
@@ -153,6 +175,7 @@ class ParentService {
     return {'total': data.length, 'linked': linked, 'unlinked': unlinked};
   }
 
+  // GET /api/parents
   // Get parents with statistics, search and filter
   Future<ParentResponse> getParents({
     String search = '',
@@ -168,18 +191,21 @@ class ParentService {
       queryParameters['filter'] = filter;
     }
 
-    final uri = Uri.parse(baseUrl).replace(
+    final uri = _baseUri.replace(
       queryParameters: queryParameters.isEmpty ? null : queryParameters,
     );
 
-    debugPrint('PARENT API: ${ApiConfig.useRender ? "Render" : "Local"}');
+    debugPrint(
+      'PARENT API: '
+      '${ApiConfig.useRender ? "Render" : "Local"}',
+    );
+
     debugPrint('PARENT API GET: $uri');
 
-    final response = await _request(() => http.get(uri, headers: headers));
+    final response = await _request(() => _client.get(uri, headers: headers));
 
     final json = _decodeJson(response.body);
 
-    // Make sure data is a list
     final rawData = json['data'];
 
     if (rawData is! List) {
@@ -188,15 +214,13 @@ class ParentService {
       throw const ParentApiException('Server did not return a parent list.');
     }
 
-    // Calculate statistics if API stats are missing
-    final calculatedStats = _calculateStats(rawData);
-
-    if (json['stats'] is Map) {
-      debugPrint('PARENT API: Using API statistics');
-    } else {
-      json['stats'] = calculatedStats;
+    // Only calculate statistics if missing
+    if (json['stats'] is! Map) {
+      json['stats'] = _calculateStats(rawData);
 
       debugPrint('PARENT API: Using calculated statistics');
+    } else {
+      debugPrint('PARENT API: Using API statistics');
     }
 
     debugPrint('PARENT API: Loaded ${rawData.length} parents');
@@ -211,54 +235,84 @@ class ParentService {
     }
   }
 
-  // Get all parent details in one API request
+  // Load all parent details using ONE API request
   Future<List<ParentDetailModel>> getAllParentDetails() async {
-    final response = await _request(
-      () => http.get(Uri.parse(baseUrl), headers: headers),
-    );
-
-    final json = _decodeJson(response.body);
-
-    // Laravel returns parents inside "data"
-    final data = json['data'];
-
-    if (data is! List) {
-      throw const ParentApiException('Invalid parent list response.');
-    }
+    final totalTimer = Stopwatch()..start();
 
     try {
-      return data.map((item) {
-        return ParentDetailModel.fromJson(
-          Map<String, dynamic>.from(item as Map),
-        );
-      }).toList();
-    } catch (error, stackTrace) {
-      debugPrint('PARENT DETAILS ERROR: $error');
-      debugPrintStack(stackTrace: stackTrace);
+      // Network request
+      final response = await _request(
+        () => _client.get(_baseUri, headers: headers),
+      );
 
-      throw const ParentApiException('Unable to read parent details.');
+      debugPrint(
+        'PARENT RESPONSE SIZE: '
+        '${response.bodyBytes.length} bytes',
+      );
+
+      // JSON parsing
+      final parseTimer = Stopwatch()..start();
+
+      final json = _decodeJson(response.body);
+      final data = json['data'];
+
+      if (data is! List) {
+        throw const ParentApiException('Invalid parent list response.');
+      }
+
+      try {
+        final details = <ParentDetailModel>[];
+
+        for (final item in data) {
+          details.add(
+            ParentDetailModel.fromJson(Map<String, dynamic>.from(item as Map)),
+          );
+        }
+
+        parseTimer.stop();
+
+        debugPrint(
+          'PARENT PARSING TIME: '
+          '${parseTimer.elapsedMilliseconds} ms',
+        );
+
+        debugPrint('TOTAL PARENTS: ${details.length}');
+
+        return details;
+      } catch (error, stackTrace) {
+        debugPrint('PARENT DETAILS ERROR: $error');
+        debugPrintStack(stackTrace: stackTrace);
+
+        throw const ParentApiException('Unable to read parent details.');
+      }
+    } finally {
+      totalTimer.stop();
+
+      debugPrint(
+        'TOTAL PARENT SERVICE TIME: '
+        '${totalTimer.elapsedMilliseconds} ms',
+      );
     }
   }
 
-  // Get parent list
+  // Get all parent models
   Future<List<ParentModel>> getAllParents() async {
     final response = await getParents();
 
     return response.parents;
   }
 
-  // GET /api/parents/{id}
   // Get parent profile by ID
   Future<ParentDetailModel> getParentById(int id) async {
     if (id <= 0) {
       throw ArgumentError('Invalid parent ID');
     }
 
-    final uri = Uri.parse('$baseUrl/$id');
+    final uri = _baseUri.replace(path: '${_baseUri.path}/$id');
 
     debugPrint('PARENT PROFILE GET: $uri');
 
-    final response = await _request(() => http.get(uri, headers: headers));
+    final response = await _request(() => _client.get(uri, headers: headers));
 
     final json = _decodeJson(response.body);
 
@@ -280,6 +334,7 @@ class ParentService {
       return parentDetail;
     } catch (error, stackTrace) {
       debugPrint('PARENT PROFILE PARSING ERROR: $error');
+
       debugPrintStack(stackTrace: stackTrace);
 
       throw const ParentApiException(
@@ -288,11 +343,11 @@ class ParentService {
     }
   }
 
-  // Create parent and user account
+  // Create parent and linked user account
   Future<ParentModel> addParent(ParentModel parent) async {
     final response = await _request(
-      () => http.post(
-        Uri.parse(baseUrl),
+      () => _client.post(
+        _baseUri,
         headers: headers,
         body: jsonEncode({
           'name': parent.name,
@@ -321,7 +376,6 @@ class ParentService {
     try {
       final parentData = Map<String, dynamic>.from(rawData);
 
-      // Laravel returns login ID separately
       if (decoded['login_id'] != null) {
         parentData['login_id'] = decoded['login_id'];
       }
@@ -337,7 +391,7 @@ class ParentService {
     }
   }
 
-  // Update parent information only
+  // Update parent information
   Future<ParentModel> updateParent(
     int id,
     Map<String, dynamic> updateFields,
@@ -346,7 +400,6 @@ class ParentService {
       throw ArgumentError('Invalid parent ID');
     }
 
-    // Only editable parent information
     const allowedFields = {
       'name',
       'gender',
@@ -359,12 +412,11 @@ class ParentService {
     final parentFields = Map<String, dynamic>.from(updateFields)
       ..removeWhere((key, value) => !allowedFields.contains(key));
 
+    final uri = _baseUri.replace(path: '${_baseUri.path}/$id');
+
     final response = await _request(
-      () => http.patch(
-        Uri.parse('$baseUrl/$id'),
-        headers: headers,
-        body: jsonEncode(parentFields),
-      ),
+      () =>
+          _client.patch(uri, headers: headers, body: jsonEncode(parentFields)),
     );
 
     final json = _decodeJson(response.body);
@@ -398,12 +450,14 @@ class ParentService {
       throw const ParentApiException('Passwords do not match.');
     }
 
-    final uri = Uri.parse('$baseUrl/$parentId/reset-password');
+    final uri = _baseUri.replace(
+      path: '${_baseUri.path}/$parentId/reset-password',
+    );
 
     debugPrint('PARENT PASSWORD RESET: Parent ID $parentId');
 
     await _request(
-      () => http.patch(
+      () => _client.patch(
         uri,
         headers: headers,
         body: jsonEncode({
@@ -422,9 +476,9 @@ class ParentService {
       throw ArgumentError('Invalid parent ID');
     }
 
-    await _request(
-      () => http.delete(Uri.parse('$baseUrl/$id'), headers: headers),
-    );
+    final uri = _baseUri.replace(path: '${_baseUri.path}/$id');
+
+    await _request(() => _client.delete(uri, headers: headers));
 
     return true;
   }

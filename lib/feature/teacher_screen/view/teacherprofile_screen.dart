@@ -67,7 +67,7 @@ class TeacherProfileScreen extends ConsumerWidget {
                       color: ColorSystem.danger,
                       size: 20,
                     ),
-                    const SizedBox(width: 10),
+                     SizedBox(width: 10),
                     Text(
                       'Delete Teacher',
                       style: TextStyle(
@@ -98,7 +98,7 @@ class TeacherProfileScreen extends ConsumerWidget {
                       // Profile header with Base64 photo
                       _profileHeader(data.teacher),
 
-                      const SizedBox(height: 12),
+                       SizedBox(height: 12),
 
                       // Teaching statistics
                       Row(
