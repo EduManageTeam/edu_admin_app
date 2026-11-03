@@ -1,7 +1,9 @@
 import 'dart:convert';
-
 import 'package:edu_admin/feature/home_feature/config/api_config.dart';
+import 'package:edu_admin/feature/home_feature/config/app_clock.dart';
 import 'package:http/http.dart' as http;
+
+import '../model/attendance_summary.dart';
 import '../model/dashboard_stats.dart';
 import 'auth_service.dart';
 
@@ -9,15 +11,16 @@ class DashboardService {
   /// GET one endpoint with the saved token and return the decoded JSON.
   /// Throws a clear error if the server reports a problem.
   static Future<dynamic> _get(String path, String token) async {
-    final response = await http
-        .get(
-          Uri.parse('${ApiConfig.baseUrl}${ApiConfig.apiPrefix}$path'),
-          headers: {
-            'Accept': 'application/json',
-            'Authorization': 'Bearer $token',
-          },
-        )
-        .timeout(ApiConfig.timeout);
+    final response = await http.get(
+      Uri.parse('${ApiConfig.baseUrl}${ApiConfig.apiPrefix}$path'),
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    ).timeout(ApiConfig.timeout);
+
+    // Learn the real time from the server (used by the clock and "today")
+    AppClock.syncFromHeader(response.headers['date']);
 
     if (response.statusCode == 401) {
       throw Exception('Session expired. Please sign in again.');
@@ -31,7 +34,9 @@ class DashboardService {
     // Some Laravel controllers send HTTP 200 but put the real status
     // inside the JSON, e.g. {"message": "...", "status": 500}
     if (body is Map && body['status'] is int && body['status'] != 200) {
-      throw Exception('$path: ${body['message'] ?? 'error ${body['status']}'}');
+      throw Exception(
+        '$path: ${body['message'] ?? 'error ${body['status']}'}',
+      );
     }
     return body;
   }
@@ -58,6 +63,22 @@ class DashboardService {
     return _list(path, body).length;
   }
 
+  /// 0 = present, 1 = absent, 2 = late, 3 = permission, null = unknown
+  static int? _classify(dynamic status) {
+    final s = (status ?? '').toString().toLowerCase();
+    if (s.contains('present')) return 0;
+    if (s.contains('absent')) return 1;
+    if (s.contains('late')) return 2;
+    if (s.contains('permission') || s == 'excused') return 3;
+    return null;
+  }
+
+  static String _two(int n) => n.toString().padLeft(2, '0');
+
+  /// "2026-10-30"
+  static String _dateKey(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-${_two(d.month)}-${_two(d.day)}';
+
   static Future<DashboardStats> fetchStats() async {
     final token = await AuthService.getToken();
     if (token == null) {
@@ -71,33 +92,56 @@ class DashboardService {
     final classes = await _get('/classes', token);
     final attendance = await _get('/attendance', token);
 
-    // ---- Attendance: count today's records by status ----
+    // ---- Attendance ----
     final records = _list('/attendance', attendance);
-    final today = DateTime.now().toIso8601String().substring(0, 10);
 
-    // If the records have a "date" field, only use today's records.
+    // "Today" in Cambodia, from the server's real time
+    final today = _dateKey(AppClock.now());
     final hasDate = records.any((e) => e is Map && e['date'] != null);
-    final todays = hasDate
-        ? records
-              .where((e) => e is Map && e['date'].toString().startsWith(today))
-              .toList()
-        : records;
 
-    int present = 0, absent = 0, late = 0, permission = 0;
+    // Index: 0 present, 1 absent, 2 late, 3 permission
+    final todayCount = [0, 0, 0, 0];
+    final allCount = [0, 0, 0, 0];
+    final perDay = <String, List<int>>{};
     final absentList = <AbsentRecord>[];
-    for (final r in todays) {
+
+    for (final r in records) {
       if (r is! Map) continue;
-      final status = (r['status'] ?? '').toString().toLowerCase();
-      if (status.contains('present')) {
-        present++;
-      } else if (status.contains('absent')) {
-        absent++;
-        absentList.add(_toAbsentRecord(r));
-      } else if (status.contains('late')) {
-        late++;
-      } else if (status.contains('permission') || status.contains('excused')) {
-        permission++;
+      final kind = _classify(r['status']);
+      if (kind == null) continue;
+
+      final raw = r['date']?.toString();
+      final key =
+          (raw != null && raw.length >= 10) ? raw.substring(0, 10) : null;
+
+      // All days
+      allCount[kind]++;
+      if (key != null) {
+        perDay.putIfAbsent(key, () => [0, 0, 0, 0])[kind]++;
       }
+
+      // Today only (if the records have no date, count everything)
+      final isToday = !hasDate || key == today;
+      if (isToday) {
+        todayCount[kind]++;
+        if (kind == 1) absentList.add(_toAbsentRecord(r));
+      }
+    }
+
+    // One entry per day, oldest first
+    final keys = perDay.keys.toList()..sort();
+    final daily = <DailyAttendance>[];
+    for (final k in keys) {
+      final date = DateTime.tryParse(k);
+      if (date == null) continue;
+      final c = perDay[k]!;
+      daily.add(DailyAttendance(
+        date: date,
+        present: c[0],
+        absent: c[1],
+        late: c[2],
+        permission: c[3],
+      ));
     }
 
     return DashboardStats(
@@ -105,11 +149,18 @@ class DashboardService {
       teachers: _count('/teachers', teachers),
       parents: _count('/parents', parents),
       classes: _count('/classes', classes),
-      present: present,
-      absent: absent,
-      late: late,
-      permission: permission,
+      present: todayCount[0],
+      absent: todayCount[1],
+      late: todayCount[2],
+      permission: todayCount[3],
       absentList: absentList,
+      allAttendance: AttendanceSummary(
+        present: allCount[0],
+        absent: allCount[1],
+        late: allCount[2],
+        permission: allCount[3],
+        daily: daily,
+      ),
     );
   }
 
@@ -123,7 +174,8 @@ class DashboardService {
 
     final name = student is Map ? _text(student['name']) : '';
     final className = schoolClass is Map ? _text(schoolClass['name']) : '';
-    final note = _text(r['reason'] ?? r['note'] ?? r['remark'] ?? r['remarks']);
+    final note =
+        _text(r['reason'] ?? r['note'] ?? r['remark'] ?? r['remarks']);
 
     return AbsentRecord(
       name: name.isEmpty ? 'Student #${_text(r['student_id'])}' : name,

@@ -1,22 +1,21 @@
-/// The ONE place to switch between your local API and the teacher's Render API.
+/// The one place for the API address.
+///
+/// The address is NOT a secret (every app must contain it). Do not put
+/// passwords, tokens or database keys in this file.
 class ApiConfig {
-  // true  = teacher's server on Render
-  // false = your own Laravel on this PC (php artisan serve)
+  // true  = use the Render server
+  // false = use your own local Laravel (php artisan serve)
   static const bool useRender = true;
 
-  // Local addresses:
-  //  - Android emulator:  http://10.0.2.2:8000
-  //  - Real phone:        http://<your-PC-IP>:8000  (php artisan serve --host=0.0.0.0)
-  //  - Windows / web:     http://localhost:8000
-  static const String baseUrl = useRender
-      ? 'https://edu-api-7c7t.onrender.com'
-      : 'http://10.0.2.2:8000';
+  static const String renderUrl = 'https://edu-api-7c7t.onrender.com';
 
-  // Both local and Render use /api/login (confirmed in Postman).
+  // Android emulator reaches your PC through 10.0.2.2
+  static const String localUrl = 'http://10.0.2.2:8000';
+
+  static String get baseUrl => useRender ? renderUrl : localUrl;
+
   static const String apiPrefix = '/api';
 
   // Render free servers can take about a minute to wake up
-  static const Duration timeout = useRender
-      ? Duration(seconds: 60)
-      : Duration(seconds: 15);
+  static const Duration timeout = Duration(seconds: 60);
 }

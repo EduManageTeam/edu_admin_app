@@ -16,16 +16,16 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   Timer? _dotsTimer;
-  int _dots = 1; // 1 -> 2 -> 3 -> back to 1
+  int _dots = 0; // 0 -> 1 -> 2 -> 3 -> back to 0
 
   @override
   void initState() {
     super.initState();
 
-    // Animate the dots: "." -> ".." -> "..." and loop
+    // Animate the dots: nothing -> . -> .. -> ... and loop
     _dotsTimer = Timer.periodic(const Duration(milliseconds: 400), (_) {
       setState(() {
-        _dots = _dots == 3 ? 1 : _dots + 1;
+        _dots = (_dots + 1) % 4;
       });
     });
 
@@ -101,10 +101,23 @@ class _SplashScreenState extends State<SplashScreen> {
                 style: TextStyle(fontSize: 13, color: ColorSystem.light),
               ),
               const Spacer(flex: 4),
-              Text(
-                // Spaces keep the text from shifting while the dots change
-                'Loading secure workspace${'.' * _dots}${' ' * (3 - _dots)}',
-                style: TextStyle(fontSize: 12, color: ColorSystem.light),
+              // Loading text: the dots sit in a fixed-width box,
+              // so the words do not move while the dots change
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Loading secure workspace',
+                    style: TextStyle(fontSize: 12, color: ColorSystem.light),
+                  ),
+                  SizedBox(
+                    width: 14,
+                    child: Text(
+                      '.' * _dots,
+                      style: TextStyle(fontSize: 12, color: ColorSystem.light),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 32),
             ],

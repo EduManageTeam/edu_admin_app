@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../model/color_system.dart';
-import '../../main_shell/main_screen.dart';
 import '../provider/auth_provider.dart';
+import '../../main_shell/main_screen.dart';
 
 class SignInScreen extends ConsumerStatefulWidget {
   const SignInScreen({super.key});
@@ -26,9 +25,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   }
 
   Future<void> _signIn() async {
-    final success = await ref
-        .read(authNotifierProvider.notifier)
-        .login(_userIdController.text.trim(), _passwordController.text);
+    final success = await ref.read(authNotifierProvider.notifier).login(
+          _userIdController.text.trim(),
+          _passwordController.text,
+        );
     if (!mounted) return;
     if (success) {
       Navigator.pushReplacement(

@@ -1,16 +1,51 @@
 import 'dart:async';
 
+import 'package:edu_admin/feature/home_feature/config/app_clock.dart';
+import 'package:edu_admin/feature/home_feature/config/app_tabs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:percent_indicator/percent_indicator.dart';
+import 'package:edu_admin/feature/people_screen/provider/people_provider.dart';
 
 import '../../../model/color_system.dart';
 import '../model/dashboard_stats.dart';
 import '../provider/dashboard_provider.dart';
 import 'absent_details_screen.dart';
+import 'attendance_overview_screen.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
+
+  // ======================================================================
+  // WHERE EACH CARD OPENS - change these 4 lines to choose.
+  //
+  // A) Open a TAB of the bottom navigation bar (the bar stays visible):
+  //      _goToTab(AppTabs.students)   // or .people / .school / .more / .home
+  //
+  // B) Open a plain page on top (NO bottom bar, with a back button):
+  //      _openPage(context, const SomeDetailPage())
+  // ======================================================================
+  void _openStudents(BuildContext context, WidgetRef ref) =>
+      _goToTab(AppTabs.students);
+
+  void _openTeachers(BuildContext context, WidgetRef ref) {
+    ref.read(peopleTabProvider.notifier).state = 0; // Teachers side
+    _goToTab(AppTabs.people);
+  }
+
+  void _openParents(BuildContext context, WidgetRef ref) {
+    ref.read(peopleTabProvider.notifier).state = 1; // Parents side
+    _goToTab(AppTabs.people);
+  }
+
+  void _openClasses(BuildContext context, WidgetRef ref) =>
+      _goToTab(AppTabs.school);
+
+  void _goToTab(int tab) => AppTabs.goTo(tab);
+
+  void _openPage(BuildContext context, Widget page) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -52,10 +87,7 @@ class DashboardScreen extends ConsumerWidget {
                                 color: ColorSystem.lnk,
                               ),
                             ),
-                            Text(
-                              'Term 2 • Active Session • Day 48',
-                              style: TextStyle(color: ColorSystem.muted),
-                            ),
+                            const _LiveDate(),
                           ],
                         ),
                       ),
@@ -123,14 +155,19 @@ class DashboardScreen extends ConsumerWidget {
                   ref.invalidate(dashboardStatsProvider);
                   await ref.read(dashboardStatsProvider.future);
                 },
+                color: ColorSystem.primary,
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(20),
                   children: statsAsync.when<List<Widget>>(
-                    loading: () => const [
+                    loading: () => [
                       Padding(
-                        padding: EdgeInsets.only(top: 80),
-                        child: Center(child: CircularProgressIndicator()),
+                        padding: const EdgeInsets.only(top: 80),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: ColorSystem.primary,
+                          ),
+                        ),
                       ),
                     ],
                     error: (error, _) => [
@@ -142,7 +179,7 @@ class DashboardScreen extends ConsumerWidget {
                         onRetry: () => ref.invalidate(dashboardStatsProvider),
                       ),
                     ],
-                    data: (stats) => _content(context, stats),
+                    data: (stats) => _content(context, ref, stats),
                   ),
                 ),
               ),
@@ -154,20 +191,26 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   // Everything below the locked header, filled with the real numbers
-  List<Widget> _content(BuildContext context, DashboardStats s) {
+  List<Widget> _content(BuildContext context, WidgetRef ref, DashboardStats s) {
     final percent = (s.presentRatio * 100).round();
 
     return [
-      // Stat cards (2 x 2)
+      // Stat cards (2 x 2) - tap a card to open its page
       Row(
         children: [
           _StatCard(
             title: 'Students',
             value: '${s.students}',
             note: 'Enrolled',
+            onTap: () => _openStudents(context,ref),
           ),
           const SizedBox(width: 12),
-          _StatCard(title: 'Teachers', value: '${s.teachers}', note: 'Faculty'),
+          _StatCard(
+            title: 'Teachers',
+            value: '${s.teachers}',
+            note: 'Faculty',
+            onTap: () => _openTeachers(context,ref),
+          ),
         ],
       ),
       const SizedBox(height: 12),
@@ -177,25 +220,59 @@ class DashboardScreen extends ConsumerWidget {
             title: 'Parents',
             value: '${s.parents}',
             note: 'Linked accounts',
+            onTap: () => _openParents(context,ref),
           ),
           const SizedBox(width: 12),
           _StatCard(
             title: 'Classes',
             value: '${s.classes}',
             note: 'Across all grades',
+            onTap: () => _openClasses(context,ref),
           ),
         ],
       ),
       const SizedBox(height: 24),
 
-      // Attendance
-      Text(
-        "Today's Attendance",
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: ColorSystem.lnk,
-        ),
+      // Attendance title + "See more"
+      Row(
+        children: [
+          Expanded(
+            child: Text(
+              "Today's Attendance",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: ColorSystem.lnk,
+              ),
+            ),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              foregroundColor: ColorSystem.primary,
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      AttendanceOverviewScreen(summary: s.allAttendance),
+                ),
+              );
+            },
+            child: const Row(
+              children: [
+                Text(
+                  'See more',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                ),
+                Icon(Icons.chevron_right, size: 18),
+              ],
+            ),
+          ),
+        ],
       ),
       const SizedBox(height: 12),
       Container(
@@ -297,7 +374,70 @@ class DashboardScreen extends ConsumerWidget {
   }
 }
 
-// Clock that updates every second (only this small widget rebuilds)
+// Today's date in Cambodia, e.g. "Friday, 30 October 2026"
+class _LiveDate extends StatefulWidget {
+  const _LiveDate();
+
+  @override
+  State<_LiveDate> createState() => _LiveDateState();
+}
+
+class _LiveDateState extends State<_LiveDate> {
+  static const _days = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+  ];
+  static const _months = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
+
+  late String _text = _format(AppClock.now());
+  Timer? _timer;
+
+  static String _format(DateTime d) =>
+      '${_days[d.weekday - 1]}, ${d.day} ${_months[d.month - 1]} ${d.year}';
+
+  @override
+  void initState() {
+    super.initState();
+    // Redraw only when the date changes (midnight or after the clock syncs)
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      final text = _format(AppClock.now());
+      if (text != _text) {
+        setState(() => _text = text);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(_text, style: TextStyle(color: ColorSystem.muted));
+  }
+}
+
+// Clock with real Cambodia time (from the server, not the phone)
 class _LiveClock extends StatefulWidget {
   const _LiveClock();
 
@@ -306,17 +446,24 @@ class _LiveClock extends StatefulWidget {
 }
 
 class _LiveClockState extends State<_LiveClock> {
-  DateTime _now = DateTime.now();
+  late String _text = _format(AppClock.now());
   Timer? _timer;
+
+  static String _format(DateTime d) {
+    final hour = d.hour % 12 == 0 ? 12 : d.hour % 12;
+    final minute = d.minute.toString().padLeft(2, '0');
+    final period = d.hour >= 12 ? 'PM' : 'AM';
+    return '${hour.toString().padLeft(2, '0')}:$minute $period';
+  }
 
   @override
   void initState() {
     super.initState();
-    // Check every second, but only redraw when the minute changes
+    // Check every second, but only redraw when the shown text changes
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      final now = DateTime.now();
-      if (now.minute != _now.minute) {
-        setState(() => _now = now);
+      final text = _format(AppClock.now());
+      if (text != _text) {
+        setState(() => _text = text);
       }
     });
   }
@@ -329,13 +476,10 @@ class _LiveClockState extends State<_LiveClock> {
 
   @override
   Widget build(BuildContext context) {
-    final hour = _now.hour % 12 == 0 ? 12 : _now.hour % 12;
-    final text =
-        '${hour.toString().padLeft(2, '0')}:'
-        '${_now.minute.toString().padLeft(2, '0')} '
-        '${_now.hour >= 12 ? 'PM' : 'AM'}';
-
-    return Text(text, style: TextStyle(color: ColorSystem.muted, fontSize: 12));
+    return Text(
+      _text,
+      style: TextStyle(color: ColorSystem.muted, fontSize: 12),
+    );
   }
 }
 
@@ -374,50 +518,72 @@ class _ErrorBox extends StatelessWidget {
   }
 }
 
-// Small stat card (Students, Teachers, ...)
+// Stat card (Students, Teachers, ...). Tap to open its page.
 class _StatCard extends StatelessWidget {
   final String title;
   final String value;
   final String note;
+  final VoidCallback onTap;
 
   const _StatCard({
     required this.title,
     required this.value,
     required this.note,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: ColorSystem.surface,
+      child: Material(
+        color: ColorSystem.surface,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: ColorSystem.border),
+          side: BorderSide(color: ColorSystem.border),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: TextStyle(color: ColorSystem.muted, fontSize: 12),
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          color: ColorSystem.muted,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right,
+                      size: 18,
+                      color: ColorSystem.muted,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                    color: ColorSystem.lnk,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  note,
+                  style: TextStyle(color: ColorSystem.muted, fontSize: 11),
+                ),
+              ],
             ),
-            const SizedBox(height: 6),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
-                color: ColorSystem.lnk,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              note,
-              style: TextStyle(color: ColorSystem.muted, fontSize: 11),
-            ),
-          ],
+          ),
         ),
       ),
     );

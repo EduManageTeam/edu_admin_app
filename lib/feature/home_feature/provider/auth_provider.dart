@@ -1,49 +1,37 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../service/auth_service.dart';
 
+/// State of the sign-in form.
 class AuthState {
   final bool isLoading;
   final String? error;
 
-  const AuthState({
-    this.isLoading = false,
-    this.error,
-  });
-
-  AuthState copyWith({
-    bool? isLoading,
-    String? error,
-  }) {
-    return AuthState(
-      isLoading: isLoading ?? this.isLoading,
-      error: error,
-    );
-  }
+  const AuthState({this.isLoading = false, this.error});
 }
 
 class AuthNotifier extends Notifier<AuthState> {
   @override
-  AuthState build() {
-    return const AuthState();
-  }
+  AuthState build() => const AuthState();
 
+  /// Returns true when the login worked (the token is saved).
   Future<bool> login(String userId, String password) async {
-    state = state.copyWith(isLoading: true, error: null);
+    if (userId.isEmpty || password.isEmpty) {
+      state = const AuthState(error: 'Please enter your ID and password.');
+      return false;
+    }
+    state = const AuthState(isLoading: true);
     try {
       await AuthService.login(userId, password);
-      state = state.copyWith(isLoading: false);
+      state = const AuthState();
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString().replaceAll('Exception: ', ''));
+      state = AuthState(error: e.toString().replaceFirst('Exception: ', ''));
       return false;
     }
   }
-
-  Future<void> logout() async {
-    await AuthService.logout();
-  }
 }
 
-final authNotifierProvider = NotifierProvider<AuthNotifier, AuthState>(() {
-  return AuthNotifier();
-});
+final authNotifierProvider = NotifierProvider<AuthNotifier, AuthState>(
+  AuthNotifier.new,
+);
