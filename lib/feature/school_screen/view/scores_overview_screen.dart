@@ -11,6 +11,7 @@ class ScoresOverviewScreen extends StatelessWidget {
 
   const ScoresOverviewScreen({super.key, this.showBack = false});
 
+  // Demo data for school-wide operational view
   static const List<InfoItem> _items = [
     InfoItem(title: 'Mathematics', subtitle: '87 average'),
     InfoItem(title: 'English', subtitle: '84 average'),
@@ -34,9 +35,46 @@ class ScoresOverviewScreen extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
               children: [
-                const MetricCard(
+                // Clear Demo Data banner
+                Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: ColorSystem.warning.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: ColorSystem.warning.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: 18,
+                        color: ColorSystem.warning,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'DEMO DATA — School-wide operational view (not real-time class data)',
+                          style: TextStyle(
+                            color: ColorSystem.warning,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                MetricCard(
                   value: '84.6',
-                  bars: [0.38, 0.56, 0.49, 0.71, 0.65, 0.84, 0.78, 1.0],
+                  bars: const [0.38, 0.56, 0.49, 0.71, 0.65, 0.84, 0.78, 1.0],
+                  statusLabel: 'DEMO DATA',
+                  statusColor: ColorSystem.warning,
                 ),
                 const SizedBox(height: 24),
                 Text(

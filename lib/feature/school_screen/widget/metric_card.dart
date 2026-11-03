@@ -5,8 +5,18 @@ import 'package:flutter/material.dart';
 class MetricCard extends StatelessWidget {
   final String value;
   final List<double> bars;
+  final String statusLabel;
+  final Color? statusColor;
+  final String title;
 
-  const MetricCard({super.key, required this.value, required this.bars});
+  const MetricCard({
+    super.key,
+    required this.value,
+    required this.bars,
+    this.statusLabel = 'DEMO DATA',
+    this.statusColor,
+    this.title = 'Key metric',
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -33,10 +43,13 @@ class MetricCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Key metric',
+                title,
                 style: TextStyle(color: ColorSystem.muted, fontSize: 13),
               ),
-              StatusChip(label: 'Live', color: ColorSystem.success),
+              StatusChip(
+                label: statusLabel,
+                color: statusColor ?? ColorSystem.warning,
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -66,7 +79,7 @@ class MetricCard extends StatelessWidget {
                     for (final entry in bars.asMap().entries)
                       Container(
                         width: 14,
-                        height: chartHeight * entry.value,
+                        height: chartHeight * entry.value.clamp(0.0, 1.0),
                         margin: const EdgeInsets.only(left: 6),
                         decoration: BoxDecoration(
                           color: entry.key == bars.length - 1
