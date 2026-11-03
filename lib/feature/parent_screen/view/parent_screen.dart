@@ -266,9 +266,9 @@ class ParentScreen extends ConsumerWidget {
                                   size: 48,
                                 ),
 
-                                 SizedBox(height: 12),
+                                const SizedBox(height: 12),
 
-                                 Text(
+                                const Text(
                                   'No parents found',
                                   style: TextStyle(
                                     color: Color(0xFFC45114),
@@ -292,7 +292,7 @@ class ParentScreen extends ConsumerWidget {
                                   ),
                                 ),
 
-                                 SizedBox(height: 15),
+                                const SizedBox(height: 15),
 
                                 OutlinedButton.icon(
                                   onPressed: () {
