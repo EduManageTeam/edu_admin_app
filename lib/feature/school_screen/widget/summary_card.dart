@@ -1,21 +1,20 @@
 import 'package:edu_admin/model/color_system.dart';
 import 'package:flutter/material.dart';
 
-
 class SummaryCard extends StatelessWidget {
   final String term;
-  final int roomsOpen;
-  final int activeClasses;
-  final int subjects;
-  final int unassigned;
+  final String roomsOpen;
+  final int? totalClasses;
+  final int? subjects;
+  final String unassigned;
 
   const SummaryCard({
     super.key,
-    required this.term,
-    required this.roomsOpen,
-    required this.activeClasses,
-    required this.subjects,
-    required this.unassigned,
+    this.term = 'Academic Term —',
+    this.roomsOpen = '—',
+    this.totalClasses,
+    this.subjects,
+    this.unassigned = '—',
   });
 
   @override
@@ -46,7 +45,7 @@ class SummaryCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              // "2 Rooms Open" chip
+              // Rooms Open chip
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -69,7 +68,7 @@ class SummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '$activeClasses Active Classes',
+            '${totalClasses ?? '—'} Total Classes',
             style: TextStyle(
               color: ColorSystem.lnk,
               fontSize: 24,
@@ -78,8 +77,7 @@ class SummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Subjects $subjects  •  Unassigned $unassigned',
-            
+            'Subjects ${subjects ?? '—'}  •  Unassigned $unassigned',
             style: TextStyle(color: ColorSystem.muted, fontSize: 12),
           ),
         ],

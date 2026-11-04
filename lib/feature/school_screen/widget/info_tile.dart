@@ -70,7 +70,8 @@ class InfoTile extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: ColorSystem.muted),
+            if (onTap != null)
+              Icon(Icons.chevron_right, color: ColorSystem.muted),
           ],
         ),
       ),
