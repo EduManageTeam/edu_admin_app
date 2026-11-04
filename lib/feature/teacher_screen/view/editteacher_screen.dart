@@ -1,15 +1,13 @@
-import 'dart:convert';
-
 import 'package:edu_admin/feature/teacher_screen/model/teacher_model.dart';
 import 'package:edu_admin/feature/teacher_screen/provider/teacher_proivder.dart';
 import 'package:edu_admin/feature/teacher_screen/view/widgets/edit_teacher_header.dart';
 import 'package:edu_admin/feature/teacher_screen/view/widgets/edit_teacher_personal_form.dart';
 import 'package:edu_admin/feature/teacher_screen/view/widgets/edit_teacher_login_info.dart';
 import 'package:edu_admin/feature/teacher_screen/view/widgets/edit_teacher_classes.dart';
+import 'package:edu_admin/widget/imagepicker_wdiget.dart';
 import 'package:edu_admin/model/color_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 
 class EditTeacherScreen extends ConsumerStatefulWidget {
   final TeacherModel teacher;
@@ -88,129 +86,6 @@ class _EditTeacherScreenState extends ConsumerState<EditTeacherScreen> {
     super.dispose();
   }
 
-  // Pick teacher photo from camera or gallery
-  Future<void> _pickPhoto(ImageSource source) async {
-    if (_isSaving || _isResetting) return;
-
-    try {
-      final picked = await ImagePicker().pickImage(
-        source: source,
-        imageQuality: 70,
-        maxWidth: 800,
-        maxHeight: 800,
-      );
-
-      if (picked == null) return;
-
-      final bytes = await picked.readAsBytes();
-
-      // Same maximum decoded photo size as Laravel: 2 MB
-      if (bytes.length > 2 * 1024 * 1024) {
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Photo must not exceed 2 MB'),
-            backgroundColor: ColorSystem.danger,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        return;
-      }
-
-      final base64String = base64Encode(bytes);
-
-      if (!mounted) return;
-
-      setState(() {
-        _photoBase64 = base64String;
-      });
-
-      debugPrint('Teacher photo selected successfully');
-      debugPrint('Photo size: ${bytes.length} bytes');
-    } catch (error) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to select photo: $error'),
-          backgroundColor: ColorSystem.danger,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
-
-  // Show camera/gallery options
-  void _showPhotoOptions() {
-    if (_isSaving || _isResetting) return;
-
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: ColorSystem.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: ColorSystem.border,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                Text(
-                  'Change Teacher Photo',
-                  style: TextStyle(
-                    color: ColorSystem.lnk,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                ListTile(
-                  leading: Icon(
-                    Icons.camera_alt_outlined,
-                    color: ColorSystem.primary,
-                  ),
-                  title: const Text('Take Photo'),
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    _pickPhoto(ImageSource.camera);
-                  },
-                ),
-
-                ListTile(
-                  leading: Icon(
-                    Icons.photo_library_outlined,
-                    color: ColorSystem.primary,
-                  ),
-                  title: const Text('Choose Photo'),
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    _pickPhoto(ImageSource.gallery);
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -250,15 +125,28 @@ class _EditTeacherScreenState extends ConsumerState<EditTeacherScreen> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(12, 8, 12, 20),
                   children: [
-                    // Header: profile photo with camera edit icon
+                    // profile photo with camera edit icon
                     EditTeacherHeader(
                       teacher: widget.teacher,
                       status: _status,
                       photoBase64: _photoBase64,
-                      onEditPhoto: _showPhotoOptions,
+                      onEditPhoto: () {
+                        if (_isSaving || _isResetting) return;
+                        ImagePickerWidget.show(
+                          context,
+                          title: 'Change Teacher Photo',
+                          onImageSelected: (base64String) {
+                            if (!mounted) return;
+
+                            setState(() {
+                              _photoBase64 = base64String;
+                            });
+                          },
+                        );
+                      },
                     ),
 
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14),
 
                     // Personal information
                     EditTeacherPersonalForm(
@@ -269,15 +157,15 @@ class _EditTeacherScreenState extends ConsumerState<EditTeacherScreen> {
                       gender: _gender,
                       status: _status,
                       joined: widget.joined,
-                      onGenderChanged: (value) {
-                        setState(() => _gender = value);
+                      onGenderChanged: (gender) {
+                        setState(() => _gender = gender);
                       },
-                      onStatusChanged: (value) {
-                        setState(() => _status = value);
+                      onStatusChanged: (status) {
+                        setState(() => _status = status);
                       },
                     ),
 
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14),
 
                     // Login information
                     EditTeacherLoginInfo(
@@ -288,7 +176,7 @@ class _EditTeacherScreenState extends ConsumerState<EditTeacherScreen> {
                       onResetPassword: _resetPassword,
                     ),
 
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14),
 
                     // Assigned classes
                     EditTeacherClasses(classes: widget.assignedClasses),
@@ -319,11 +207,11 @@ class _EditTeacherScreenState extends ConsumerState<EditTeacherScreen> {
                             borderRadius: BorderRadius.circular(13),
                           ),
                         ),
-                        child: const Text('Cancel'),
+                        child: Text('Cancel'),
                       ),
                     ),
 
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10),
 
                     // Save changes
                     Expanded(
@@ -340,7 +228,7 @@ class _EditTeacherScreenState extends ConsumerState<EditTeacherScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Icon(Icons.save_rounded, size: 18),
+                            : Icon(Icons.save_rounded, size: 18),
                         label: Text(_isSaving ? 'Saving...' : 'Save Changes'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: ColorSystem.primary,

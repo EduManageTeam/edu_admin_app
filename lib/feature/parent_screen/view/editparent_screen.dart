@@ -116,7 +116,7 @@ class _EditParentScreenState extends ConsumerState<EditParentScreen> {
                 ),
               ),
 
-              // Fixed bottom buttons
+              //  bottom buttons
               Container(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                 decoration: BoxDecoration(

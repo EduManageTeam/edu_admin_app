@@ -7,8 +7,6 @@ import 'package:flutter/material.dart';
 Widget parentCard(BuildContext context, ParentModel parent) {
   final String name = parent.name;
   final String phone = parent.phone;
-  final int childrenCount = parent.childrenCount;
-
   return Card(
     color: ColorSystem.surface,
     elevation: 2,
