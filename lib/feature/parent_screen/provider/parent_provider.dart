@@ -24,12 +24,29 @@ final parentServiceProvider = FutureProvider<ParentService>((ref) async {
 });
 
 // Cache all parent info
+
 final allParentDetailsProvider = FutureProvider<List<ParentDetailModel>>((
   ref,
 ) async {
-  final parentService = await ref.watch(parentServiceProvider.future);
+  final totalTimer = Stopwatch()..start();
+  try {
+    final parentService = await ref.watch(parentServiceProvider.future);
 
-  return parentService.getAllParentDetails();
+    final apiTimer = Stopwatch()..start();
+
+    final details = await parentService.getAllParentDetails();
+
+    apiTimer.stop();
+
+    debugPrint('Parent Api details: ${apiTimer.elapsedMilliseconds} ms');
+    // debugPrint('total parent: ${details.length}');
+
+    return details;
+  } finally {
+    totalTimer.stop();
+
+    debugPrint('Total Parent Loading: ${totalTimer.elapsedMilliseconds} ms');
+  }
 });
 
 // Search parents
@@ -42,15 +59,26 @@ final parentFilterProvider = StateProvider<String>((ref) => 'all');
 final parentAllProvider = FutureProvider<ParentResponse>((ref) async {
   final details = await ref.watch(allParentDetailsProvider.future);
 
-  final parents = details.map((e) => e.parent).toList();
+  final parents = details.map((detail) => detail.parent).toList();
 
-  final stats = ParentStats(
-    total: parents.length,
-    linked: parents.where((parent) => parent.childrenCount > 0).length,
-    unlinked: parents.where((parent) => parent.childrenCount == 0).length,
+  int linked = 0;
+  int unlinked = 0;
+
+  for (final parent in parents) {
+    if (parent.childrenCount > 0) {
+      linked++;
+    } else {
+      unlinked++;
+    }
+  }
+  return ParentResponse(
+    parents: parents,
+    stats: ParentStats(
+      total: parents.length,
+      linked: linked,
+      unlinked: unlinked,
+    ),
   );
-
-  return ParentResponse(parents: parents, stats: stats);
 });
 
 // Get parent profile <- cached list
@@ -74,6 +102,7 @@ class ParentNotifier extends AsyncNotifier<ParentResponse> {
   Future<ParentService> get service => ref.read(parentServiceProvider.future);
 
   @override
+  @override
   Future<ParentResponse> build() async {
     final search = ref.watch(parentSearchProvider);
     final filter = ref.watch(parentFilterProvider);
@@ -81,8 +110,14 @@ class ParentNotifier extends AsyncNotifier<ParentResponse> {
     final response = await ref.watch(parentAllProvider.future);
 
     final keyword = search.trim().toLowerCase();
+    final selectedFilter = filter.trim().toLowerCase();
 
-    // Filter parents locally
+    // Reuse the original response if no filters are applied.
+    if (keyword.isEmpty && selectedFilter == 'all') {
+      return response;
+    }
+
+    // Filter cached data locally.
     final parents = response.parents.where((parent) {
       final matchesSearch =
           keyword.isEmpty ||
@@ -91,21 +126,32 @@ class ParentNotifier extends AsyncNotifier<ParentResponse> {
           parent.id.toString() == keyword;
 
       final matchesFilter =
-          filter == 'all' ||
-          (filter == 'linked' && parent.childrenCount > 0) ||
-          (filter == 'unlinked' && parent.childrenCount == 0);
+          selectedFilter == 'all' ||
+          (selectedFilter == 'linked' && parent.childrenCount > 0) ||
+          (selectedFilter == 'unlinked' && parent.childrenCount == 0);
 
       return matchesSearch && matchesFilter;
     }).toList();
 
-    // Calculate filtered statistics
-    final stats = ParentStats(
-      total: parents.length,
-      linked: parents.where((parent) => parent.childrenCount > 0).length,
-      unlinked: parents.where((parent) => parent.childrenCount == 0).length,
-    );
+    int linked = 0;
+    int unlinked = 0;
 
-    return ParentResponse(parents: parents, stats: stats);
+    for (final parent in parents) {
+      if (parent.childrenCount > 0) {
+        linked++;
+      } else {
+        unlinked++;
+      }
+    }
+
+    return ParentResponse(
+      parents: parents,
+      stats: ParentStats(
+        total: parents.length,
+        linked: linked,
+        unlinked: unlinked,
+      ),
+    );
   }
 
   // Refresh parent list

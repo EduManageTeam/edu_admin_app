@@ -1,3 +1,5 @@
+import 'attendance_summary.dart';
+
 /// One student who is absent today (shown in the details screen).
 class AbsentRecord {
   final String name;
@@ -27,6 +29,9 @@ class DashboardStats {
   // Who is absent today
   final List<AbsentRecord> absentList;
 
+  // Attendance of all days (for the "See more" page)
+  final AttendanceSummary allAttendance;
+
   const DashboardStats({
     required this.students,
     required this.teachers,
@@ -37,6 +42,7 @@ class DashboardStats {
     required this.late,
     required this.permission,
     required this.absentList,
+    required this.allAttendance,
   });
 
   int get attendanceTotal => present + absent + late + permission;

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../model/color_system.dart';
 
 /// Shared bottom navigation bar (Home, Students, People, School, More).
@@ -18,11 +17,8 @@ class AppBottomNav extends StatelessWidget {
     _NavItem('Home', Icons.home_outlined, Icons.home_rounded),
     _NavItem('Students', Icons.people_outline, Icons.people_alt_rounded),
     _NavItem('People', Icons.groups_outlined, Icons.groups_rounded),
-    _NavItem(
-      'School',
-      Icons.account_balance_outlined,
-      Icons.account_balance_rounded,
-    ),
+    _NavItem('School', Icons.account_balance_outlined,
+        Icons.account_balance_rounded),
     _NavItem('More', Icons.more_horiz, Icons.more_horiz),
   ];
 
@@ -54,9 +50,7 @@ class AppBottomNav extends StatelessWidget {
                         width: 56,
                         height: 30,
                         decoration: BoxDecoration(
-                          color: active
-                              ? ColorSystem.light
-                              : Colors.transparent,
+                          color: active ? ColorSystem.light : Colors.transparent,
                           borderRadius: BorderRadius.circular(15),
                           border: Border.all(
                             color: active
@@ -79,9 +73,8 @@ class AppBottomNav extends StatelessWidget {
                         item.label,
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight: active
-                              ? FontWeight.bold
-                              : FontWeight.w500,
+                          fontWeight:
+                              active ? FontWeight.bold : FontWeight.w500,
                           color: active
                               ? ColorSystem.primary
                               : ColorSystem.muted,

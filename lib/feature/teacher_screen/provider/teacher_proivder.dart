@@ -2,6 +2,7 @@ import 'package:edu_admin/feature/home_feature/service/auth_service.dart';
 import 'package:edu_admin/feature/teacher_screen/model/teacher_model.dart';
 import 'package:edu_admin/feature/teacher_screen/model/teacher_response_model.dart';
 import 'package:edu_admin/feature/teacher_screen/model/teacherstats_model.dart';
+import 'package:edu_admin/feature/teacher_screen/provider/teacherimage_provider.dart';
 import 'package:edu_admin/feature/teacher_screen/service/teacher_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,13 +24,37 @@ final teacherServiceProvider = FutureProvider<TeacherService>((ref) async {
   return TeacherService(token: token);
 });
 
-// Cache all teacher information
+// Shared teacher details cache
 final allTeacherDetailsProvider = FutureProvider<List<TeacherDetailModel>>((
   ref,
 ) async {
-  final teacherService = await ref.watch(teacherServiceProvider.future);
+  final totalTimer = Stopwatch()..start();
 
-  return teacherService.getAllTeacherDetails();
+  try {
+    final teacherService = await ref.watch(teacherServiceProvider.future);
+
+    final apiTimer = Stopwatch()..start();
+
+    final details = await teacherService.getAllTeacherDetails();
+
+    apiTimer.stop();
+
+    debugPrint(
+      'Teacher Api Details: '
+      '${apiTimer.elapsedMilliseconds} ms',
+    );
+
+    // debugPrint('Total Teachers: ${details.length}');
+
+    return details;
+  } finally {
+    totalTimer.stop();
+
+    debugPrint(
+      'Total Teacher Loading: '
+      '${totalTimer.elapsedMilliseconds} ms',
+    );
+  }
 });
 
 // Search teachers
@@ -38,26 +63,41 @@ final teacherSearchProvider = StateProvider<String>((ref) => '');
 // Filter teachers
 final teacherStatusProvider = StateProvider<String>((ref) => 'all');
 
-// Get teacher list from shared cache
+// Calculate statistics in a single pass
+TeacherStats _calculateTeacherStats(List<TeacherModel> teachers) {
+  int onDuty = 0;
+  int onLeave = 0;
+
+  for (final teacher in teachers) {
+    final status = teacher.status.trim().toLowerCase();
+
+    if (status == 'active') {
+      onDuty++;
+    } else if (status == 'inactive') {
+      onLeave++;
+    }
+  }
+
+  return TeacherStats(
+    assigned: teachers.length,
+    onDuty: onDuty,
+    onLeave: onLeave,
+  );
+}
+
+// Teacher list from shared cache
 final teacherAllProvider = FutureProvider<TeacherResponse>((ref) async {
   final details = await ref.watch(allTeacherDetailsProvider.future);
 
-  final teachers = details.map((e) => e.teacher).toList();
+  final teachers = details.map((detail) => detail.teacher).toList();
 
-  final stats = TeacherStats(
-    assigned: teachers.length,
-    onDuty: teachers
-        .where((teacher) => teacher.status.toLowerCase() == 'active')
-        .length,
-    onLeave: teachers
-        .where((teacher) => teacher.status.toLowerCase() == 'inactive')
-        .length,
+  return TeacherResponse(
+    teachers: teachers,
+    stats: _calculateTeacherStats(teachers),
   );
-
-  return TeacherResponse(teachers: teachers, stats: stats);
 });
 
-// Get teacher profile from cached list
+// Teacher profile from shared cache
 final teacherDetailProvider = FutureProvider.family<TeacherDetailModel, int>((
   ref,
   teacherId,
@@ -85,8 +125,14 @@ class TeacherNotifier extends AsyncNotifier<TeacherResponse> {
     final response = await ref.watch(teacherAllProvider.future);
 
     final keyword = search.trim().toLowerCase();
+    final selectedStatus = status.trim().toLowerCase();
 
-    // Filter teachers locally
+    // Reuse cached response when no filters are applied
+    if (keyword.isEmpty && selectedStatus == 'all') {
+      return response;
+    }
+
+    // Filter locally without another API request
     final teachers = response.teachers.where((teacher) {
       final matchesSearch =
           keyword.isEmpty ||
@@ -95,23 +141,16 @@ class TeacherNotifier extends AsyncNotifier<TeacherResponse> {
           teacher.id.toString() == keyword;
 
       final matchesStatus =
-          status == 'all' || teacher.status.trim().toLowerCase() == status;
+          selectedStatus == 'all' ||
+          teacher.status.trim().toLowerCase() == selectedStatus;
 
       return matchesSearch && matchesStatus;
     }).toList();
 
-    // Calculate filtered statistics
-    final stats = TeacherStats(
-      assigned: teachers.length,
-      onDuty: teachers
-          .where((teacher) => teacher.status.trim().toLowerCase() == 'active')
-          .length,
-      onLeave: teachers
-          .where((teacher) => teacher.status.trim().toLowerCase() == 'inactive')
-          .length,
+    return TeacherResponse(
+      teachers: teachers,
+      stats: _calculateTeacherStats(teachers),
     );
-
-    return TeacherResponse(teachers: teachers, stats: stats);
   }
 
   // Refresh teacher list
@@ -140,6 +179,7 @@ class TeacherNotifier extends AsyncNotifier<TeacherResponse> {
       'phone': teacher.phone,
       'email': teacher.email,
       'address': teacher.address,
+      'photo': teacher.photo,
       'status': teacher.status,
     });
 
@@ -170,11 +210,6 @@ class TeacherNotifier extends AsyncNotifier<TeacherResponse> {
     );
   }
 }
-
-// Teacher provider
-final teacherProvider = AsyncNotifierProvider<TeacherNotifier, TeacherResponse>(
-  TeacherNotifier.new,
-);
 
 // Add teacher form state
 class AddTeacherFormState {
@@ -214,7 +249,6 @@ class AddTeacherFormNotifier extends Notifier<AddTeacherFormState> {
 
   @override
   AddTeacherFormState build() {
-    // Release form controllers when provider is disposed
     ref.onDispose(() {
       userIdController.dispose();
       nameController.dispose();
@@ -257,6 +291,8 @@ class AddTeacherFormNotifier extends Notifier<AddTeacherFormState> {
     state = state.copyWith(isCreating: true);
 
     try {
+      final photo = ref.read(teacherPhotoProvider);
+
       final teacher = TeacherModel(
         id: 0,
         name: nameController.text.trim(),
@@ -266,7 +302,7 @@ class AddTeacherFormNotifier extends Notifier<AddTeacherFormState> {
             ? null
             : emailController.text.trim(),
         address: addressController.text.trim(),
-        photo: null,
+        photo: photo,
         status: state.status.toLowerCase(),
       );
 
@@ -279,6 +315,10 @@ class AddTeacherFormNotifier extends Notifier<AddTeacherFormState> {
   }
 }
 
+// Teacher provider
+final teacherProvider = AsyncNotifierProvider<TeacherNotifier, TeacherResponse>(
+  TeacherNotifier.new,
+);
 // Add teacher form provider
 final addTeacherFormProvider =
     NotifierProvider.autoDispose<AddTeacherFormNotifier, AddTeacherFormState>(

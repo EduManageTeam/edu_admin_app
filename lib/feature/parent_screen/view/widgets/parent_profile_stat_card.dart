@@ -32,7 +32,7 @@ class ParentProfileStatCard extends StatelessWidget {
                 Text(
                   value,
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 18,
                     fontWeight: FontWeight.w800,
                     color: ColorSystem.lnk,
                   ),
@@ -40,7 +40,7 @@ class ParentProfileStatCard extends StatelessWidget {
                 SizedBox(height: 3),
                 Text(
                   title,
-                  style: TextStyle(fontSize: 15, color: ColorSystem.muted),
+                  style: TextStyle(fontSize: 13, color: ColorSystem.muted),
                 ),
               ],
             ),

@@ -68,7 +68,7 @@ class AbsentDetailsScreen extends StatelessWidget {
                   : ListView.separated(
                       padding: const EdgeInsets.all(20),
                       itemCount: records.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      separatorBuilder: (_, _) => const SizedBox(height: 10),
                       itemBuilder: (context, i) =>
                           _AbsentTile(record: records[i]),
                     ),
@@ -110,7 +110,7 @@ class _AbsentTile extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: ColorSystem.danger.withValues(alpha: 0.1),
+              color: ColorSystem.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             alignment: Alignment.center,
@@ -118,7 +118,7 @@ class _AbsentTile extends StatelessWidget {
               initial,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: ColorSystem.danger,
+                color: ColorSystem.primary,
               ),
             ),
           ),
